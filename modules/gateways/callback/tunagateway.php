@@ -33,30 +33,6 @@ if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 
-function tunagateway_log($message, $data = null) {
-    global $gatewayParams;
-
-    logTransaction($gatewayParams['name'], $data, $message);
-}
-
-function tunagateway_curl($host, $port, $user, $pass, $path) {
-    $ch = curl_init();
-
-    curl_setopt_array($ch, array(
-        CURLOPT_USERPWD         => "$user:$pass",
-        CURLOPT_SSL_VERIFYPEER  => false,
-        CURLOPT_SSL_VERIFYHOST  => false,
-        CURLOPT_FTP_SSL         => CURLFTPSSL_ALL,
-        CURLOPT_FTPSSLAUTH      => CURLFTPAUTH_DEFAULT,
-        CURLOPT_URL             => "ftps://$host/$path",
-        CURLOPT_PORT            => $port,
-        CURLOPT_TIMEOUT         => 30
-    ));
-
-    return $ch;
-}
-
-
 // Retrieve data returned in payment gateway callback
 // Varies per payment gateway
 $success = $_POST["x_status"];
