@@ -1,0 +1,4126 @@
+openapi: 3.0.1
+servers:
+  - url: https://sandbox.tuna-demo.uy
+    description: sandbox
+  - url: https://engine.tunagateway.com
+    description: production
+info:
+  title: Tuna Payment API
+  description: >
+    # Introduction
+
+
+    Tuna Payment API can perform payment operations for a wide variety of
+    payment methods such as
+
+    Credit Card, Debit Card, Boleto, PIX, 3DS, and Bitcoin.
+
+
+    We always recommend using our plugins, but be our guest and use the API
+    described below.
+
+    Tuna is a PCI Level 1 certified company; your data is safe with us.
+
+
+    Tuna APIs are organized around REST. Our APIs have predictable
+    resource-oriented URLs,
+
+    accept form-encoded request bodies, return JSON-encoded responses, and use
+    standard HTTP
+
+    response codes, authentication, and verbs.
+
+
+    You can use the Tuna APIs in sandbox mode, which does not affect your live
+    data or
+
+    interact with the banking networks. The API server and keys you use for the
+    request
+
+    determine whether the request is in production mode or sandbox mode.
+
+
+    # API REST Guides
+
+
+    - **API REST**: are you looking for a guide for our APIs? Check out the
+    introduction to the [API REST](/api).
+
+
+    - **Payment Integration**: do you need to be able to perform secure credit
+    card payments and/or also use other payment methods such as Debit Card,
+    Boleto, PIX, and Bitcoin? Check out how to perform a [Payment
+    Integration](/api/payment-integration) with our [Payment API](/api/payment)
+    and [Token API](/api/token).
+
+
+    - **Split Integration**: are you looking to set up a marketplace so your
+    merchants will use split payment solutions in your marketplace? Check out
+    how to perform a [Split Integration](/api/split-integration) with our
+    [Merchant API](/api/merchant).
+
+
+    - **Tuna Codes**: do you need to learn about your codes and status? Please,
+    check out the [Tuna Codes](/api/tuna-codes).
+
+
+    - **Webhooks Notifications**: learn more about our notifications in the
+    guide [Webhooks Notifications](/api/webhooks-notifications).
+
+
+    - **Sandbox Environment**: check out for information about test data and a
+    full description of the [Sandbox Environment](/api/sandbox-environment).
+
+
+    - **Idempotent Requests**: do you require idempotent requests? Take a look
+    how to make [Idempotent Requests](/api/idempotent-requests).
+
+
+    # Examples
+
+
+    There are many examples on the right. Please check all that are meaningful
+    to your company.
+
+
+    # Authentication
+
+
+    Your first secrets are provided when you sign up for an account:  account
+    name and app token.
+
+
+    You can generate additional API keys and delete API keys (as you may need to
+    rotate your
+
+    keys in the future). You authenticate to Tuna APIs by providing your account
+    name and app
+
+    token key in the request HTTP headers.
+
+
+    Tuna's sandbox environment uses public keys available to anyone:
+
+
+    ```yaml
+
+    "x-tuna-account": "demo"
+
+    "x-tuna-apptoken": "a3823a59-66bb-49e2-95eb-b47c447ec7a7"
+
+    ```
+  version: v1
+  license:
+    name: MIT License
+    url: https://dev.tuna.uy/api/license
+components:
+  schemas:
+    Account:
+      description: The name of your account.
+      type: string
+    AppToken:
+      description: The app token associated with your account.
+      type: string
+      format: uuid
+    InitRequestSchema:
+      type: object
+      properties: &ref_0
+        tokenSession:
+          type: string
+          description: >-
+            Required only for payment with **credit card**. Here use the
+            **sessionId** created at the [Token API endpoint "New Session"
+            method.](/api/token#operation/NewSession)
+          nullable: true
+        partnerUniqueID:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        customer:
+          type: object
+          description: >-
+            This object is used to pass on **customer data**, mainly for fraud
+            prevention. Also, when using a saved card, only card tokens
+            belonging to the user of this customer will work.
+          nullable: true
+          properties:
+            iD:
+              type: string
+              description: A string that identifies the customer.
+              nullable: true
+            email:
+              type: string
+              description: Email.
+              nullable: true
+            name:
+              type: string
+              description: Full name.
+              nullable: true
+            document:
+              type: string
+              description: Document ID.
+              nullable: true
+            documentType:
+              type: string
+              description: >-
+                Document ID type (pt-br: can be either "CPF" or "CNPJ"; can also
+                be "SSN" or other types).
+              nullable: true
+            birthDate:
+              type: string
+              description: Birthday in date format.
+              format: date
+              nullable: true
+            gender:
+              type: string
+              description: Customer's gender.
+              nullable: true
+            daysSinceRegistration:
+              type: integer
+              description: Days since customer's registration.
+              format: int16
+              nullable: true
+            daysSinceLastLogin:
+              type: integer
+              description: Days since customer's last login date.
+              format: int16
+              nullable: true
+            daysSinceLastPasswordChange:
+              type: integer
+              description: Days since customer's last password change date.
+              format: int16
+              nullable: true
+            daysSinceLastPurchase:
+              type: integer
+              description: Days since customer's last purchase date.
+              format: int16
+              nullable: true
+            daysSinceFirstPurchase:
+              type: integer
+              description: Days since customer's first purchase date.
+              format: int16
+              nullable: true
+            data:
+              type: object
+              additionalProperties: {}
+              description: Any additional data used to refer to the customer.
+              nullable: true
+        vendor:
+          type: object
+          description: >-
+            This object is used to pass on **vendor data**. This is mainly used
+            for fraud prevention.
+          nullable: true
+          properties:
+            mCC:
+              type: string
+              description: Merchant Category Code (MCC).
+              nullable: true
+            code:
+              type: string
+              description: Commercial establishment of the vendor("EC" in Brazil).
+              nullable: true
+            industry:
+              type: string
+              description: The activity of the vendor.
+              nullable: true
+            document:
+              type: string
+              description: Document ID.
+              nullable: true
+            documentType:
+              type: string
+              description: >-
+                Document ID type (pt-br: can be either "CPF" or "CNPJ"; can also
+                be "SSN" or other types).
+              nullable: true
+            daysSinceRegistration:
+              type: integer
+              description: Days since vendor's registration (for marketplaces).
+              format: int16
+              nullable: true
+            daysSinceLastSell:
+              type: integer
+              description: Days since vendor's last sale (for marketplaces).
+              format: int16
+              nullable: true
+            daysSinceFirstSell:
+              type: integer
+              description: Days since vendor's first sale (for marketplaces).
+              format: int16
+              nullable: true
+        paymentItems:
+          type: object
+          description: This object holds the collection of items related to this order.
+          nullable: true
+          properties:
+            items:
+              type: array
+              description: An array of payment items.
+              nullable: true
+              items:
+                type: object
+                properties:
+                  detailUniqueID:
+                    type: string
+                    description: >-
+                      An ID is used to identify this item inside your order. It
+                      can't be repeated inside the same order.
+                    nullable: true
+                  sku:
+                    type: string
+                    description: >-
+                      A product identifier. A stock-keeping unit (SKU) is a
+                      scannable bar code, most often seen printed on product
+                      labels.
+                    nullable: true
+                  ean:
+                    type: string
+                    description: >-
+                      Similar to SKU. The International Article Number, also
+                      known as European Article Number (EAN), is a standard
+                      describing a barcode symbology and numbering system. It is
+                      used in global trade to identify a specific retail product
+                      type, a specific packaging configuration, and a specific
+                      manufacturer.
+                    nullable: true
+                  amount:
+                    type: number
+                    description: The value of each unit of this payment item.
+                    format: double
+                  productID:
+                    type: integer
+                    description: An internal product identifier.
+                    format: int32
+                    nullable: true
+                  productDescription:
+                    type: string
+                    description: Short description of the product, e.g., white shirt.
+                    nullable: true
+                  categoryID:
+                    type: integer
+                    description: A numeric category identifier of the item category.
+                    format: int32
+                    nullable: true
+                  categoryName:
+                    type: string
+                    description: The name of the item category.
+                    nullable: true
+                  itemQuantity:
+                    type: integer
+                    description: The number of units included in this item.
+                    format: int16
+                  split:
+                    type: object
+                    description: This object is required when using split payments.
+                    nullable: true
+                    properties:
+                      merchantID:
+                        type: string
+                        description: Your unique ID for the merchant.
+                        nullable: true
+                      merchantDocument:
+                        type: string
+                        description: Merchant's document ID.
+                        nullable: true
+                      merchantDocumentType:
+                        type: string
+                        description: >-
+                          Document ID type (pt-br: can be either "CPF" or
+                          "CNPJ"; can also be "SSN" or other types).
+                        nullable: true
+                      percent:
+                        type: number
+                        description: >-
+                          Percent per item to be paid to this merchant. This
+                          property overrides the default split rules.
+                        format: double
+                        nullable: true
+                      amount:
+                        type: number
+                        description: >-
+                          Amount per item to be paid to this merchant. This
+                          property overrides the default split rules.
+                        format: double
+                        nullable: true
+                  antiFraud:
+                    type: object
+                    description: This object holds specific anti-fraud data.
+                    nullable: true
+                    properties:
+                      ean:
+                        type: string
+                        description: Ean product code.
+                        nullable: true
+                      deliveryAddressee:
+                        type: string
+                        description: >-
+                          Name of the person receiving the goods at the delivery
+                          address.
+                        nullable: true
+                      isEmailConfirmed:
+                        type: boolean
+                        description: States if the customer has verified his email address.
+                        nullable: true
+                      wasCardChanged:
+                        type: boolean
+                        description: >-
+                          States if the customer has attempted to buy this order
+                          with a different card before.
+                        nullable: true
+                      isPhoneNumberConfirmed:
+                        type: boolean
+                        description: Whether the customer has verified his phone number.
+                        nullable: true
+                      loginCredential:
+                        type: string
+                        description: The username used to login (when logged in).
+                        nullable: true
+                      isVIPClient:
+                        type: boolean
+                        description: >-
+                          States if this customer should be treated differently
+                          in a positive way (i.e., belongs to an allow list).
+                        nullable: true
+                      isEmployeeClient:
+                        type: boolean
+                        description: Whether the customer is an employee of the merchant.
+                        nullable: true
+                      wasAccountModified:
+                        type: boolean
+                        description: If the account has been modified.
+                        nullable: true
+                      daysSinceLastAccountChange:
+                        type: integer
+                        description: >-
+                          The number of days since the account has been
+                          modified.
+                        format: int16
+                        nullable: true
+                      fidelityNumber:
+                        type: string
+                        description: The fidelity number (when applied to this purchase).
+                        nullable: true
+                      daysSinceFidelityRegistration:
+                        type: integer
+                        description: The number of days since the fidelity card was issued.
+                        format: int16
+                        nullable: true
+                      daysSinceLastPointsExchange:
+                        type: integer
+                        description: >-
+                          The number of days since the fidelity card points were
+                          last used.
+                        format: int16
+                        nullable: true
+                      fidelityBalance:
+                        type: integer
+                        description: Balance available at the fidelity card.
+                        format: int32
+                        nullable: true
+                      amountPointsLastExchange:
+                        type: integer
+                        description: Amount of fidelity points used last time.
+                        format: int32
+                        nullable: true
+                      phoneChargesInLast30Days:
+                        type: integer
+                        description: >-
+                          The number of recharges made to a prepaid phone number
+                          in the last 30 days.
+                        format: int16
+                        nullable: true
+                      minutesChargedInLast30Days:
+                        type: integer
+                        description: >-
+                          The number of minutes charged to a prepaid phone
+                          number in the last 30 days.
+                        format: int16
+                        nullable: true
+                      data:
+                        type: object
+                        description: >-
+                          An array of generic key-value pairs to input any
+                          additional anti-fraud data.
+                        nullable: true
+                        properties:
+                          key:
+                            type: string
+                            description: Dictionary key.
+                          value:
+                            type: string
+                            description: Dictionary value.
+                  presentMessage:
+                    type: string
+                    description: >-
+                      "Present" or "gift" message. Usually a message associated
+                      with a gift card.
+                    nullable: true
+        paymentData:
+          type: object
+          description: Information regarding the payment methods used in this order.
+          nullable: true
+          properties:
+            paymentMethods:
+              type: array
+              description: List of payment methods.
+              nullable: true
+              items:
+                type: object
+                properties:
+                  paymentMethodType:
+                    type: string
+                    description: >-
+                      A code that indicates the type of payment method. Possible
+                      values are found at [payment methods reference
+                      table](/api/tuna-codes#payment-methods).
+                    format: char
+                  amount:
+                    type: number
+                    description: The total value charged through this payment method.
+                    format: double
+                  installments:
+                    type: integer
+                    description: >-
+                      The number of installments requested in this payment
+                      method.
+                    format: int16
+                  cardInfo:
+                    type: object
+                    description: An object that holds credit card payment information.
+                    nullable: true
+                    properties:
+                      token:
+                        type: string
+                        description: >-
+                          An irreversible token used to represent the credit
+                          card. This token is obtained using Tuna's plugins or
+                          directly through our Token API.
+                        nullable: true
+                      tokenProvider:
+                        type: string
+                        description: >-
+                          The name of the tokenization provider. If you are
+                          using Tuna Token API, it should be "Tuna"; otherwise,
+                          put the name of your provider.
+                        nullable: true
+                      cardHolderName:
+                        type: string
+                        description: Name of the cardholder as printed on the credit card.
+                        nullable: true
+                      alias:
+                        type: string
+                        description: A nickname to identify the card after it's saved.
+                        nullable: true
+                      expirationMonth:
+                        type: integer
+                        description: >-
+                          Two digits are used to represent the expiration month
+                          of the card.
+                        format: int16
+                        nullable: true
+                      expirationYear:
+                        type: integer
+                        description: >-
+                          Four digits are used to represent the expiration year
+                          of the card.
+                        format: int16
+                        nullable: true
+                      billingInfo:
+                        type: object
+                        description: >-
+                          Customer's billing information for this payment
+                          method.
+                        nullable: true
+                        properties:
+                          number:
+                            type: string
+                            description: The billing info's number or identifier.
+                            nullable: true
+                          document:
+                            type: string
+                            description: Document ID.
+                            nullable: true
+                          documentType:
+                            type: string
+                            description: >-
+                              Document ID type (pt-br: can be either "CPF" or
+                              "CNPJ"; can also be "SSN" or other types).
+                            nullable: true
+                          name:
+                            type: string
+                            description: Full name.
+                            nullable: true
+                          phone:
+                            type: string
+                            description: A string containing the phone number.
+                            nullable: true
+                          address:
+                            type: object
+                            description: An object that contains delivery address fields.
+                            nullable: true
+                            properties:
+                              street:
+                                type: string
+                                description: Street name.
+                                nullable: true
+                              number:
+                                type: string
+                                description: Building number.
+                                nullable: true
+                              complement:
+                                type: string
+                                description: Address complement (e.g., apartment number).
+                                nullable: true
+                              neighborhood:
+                                type: string
+                                description: Neighborhood.
+                                nullable: true
+                              city:
+                                type: string
+                                description: City.
+                                nullable: true
+                              state:
+                                type: string
+                                description: State.
+                                nullable: true
+                              country:
+                                type: string
+                                description: Country.
+                                nullable: true
+                              postalCode:
+                                type: string
+                                description: 'Postal code (pt-br: "CEP").'
+                                nullable: true
+                              phone:
+                                type: string
+                                description: A string containing the phone number.
+                                nullable: true
+                      externalProviderInfo:
+                        type: string
+                        description: >-
+                          Specific data related to the external provider being
+                          used.
+                        nullable: true
+                      brandName:
+                        type: string
+                        description: >-
+                          The brand of the credit card. You should use the brand
+                          name value returned by the Tuna plugin or Tuna Token
+                          API.
+                        nullable: true
+                      tokenSingleUse:
+                        type: integer
+                        description: >-
+                          Use **0** if it's a previously saved credit card
+                          (default). Use **1** if the token was generated for
+                          single use.
+                        format: int32
+                        nullable: true
+                      saveCard:
+                        type: boolean
+                        description: Whether to save this card for future use or not.
+                        nullable: true
+                  boletoInfo:
+                    type: object
+                    description: Boleto specific information.
+                    nullable: true
+                    properties:
+                      expiration:
+                            type: string
+                            description: The boleto's expiration date.
+                            format: date
+                            nullable: true
+                      billingInfo:
+                        type: object
+                        description: >-
+                          Customer's billing information for this payment
+                          method.
+                        nullable: true
+                        properties:
+                          number:
+                            type: string
+                            description: The billing info's number or identifier.
+                            nullable: true
+                          document:
+                            type: string
+                            description: Document ID.
+                            nullable: true
+                          documentType:
+                            type: string
+                            description: >-
+                              Document ID type (pt-br: can be either "CPF" or
+                              "CNPJ"; can also be "SSN" or other types).
+                            nullable: true
+                          name:
+                            type: string
+                            description: Full name.
+                            nullable: true
+                          phone:
+                            type: string
+                            description: A string containing the phone number.
+                            nullable: true
+                          address:
+                            type: object
+                            description: An object that contains delivery address fields.
+                            nullable: true
+                            properties:
+                              street:
+                                type: string
+                                description: Street name.
+                                nullable: true
+                              number:
+                                type: string
+                                description: Building number.
+                                nullable: true
+                              complement:
+                                type: string
+                                description: Address complement (e.g., apartment number).
+                                nullable: true
+                              neighborhood:
+                                type: string
+                                description: Neighborhood.
+                                nullable: true
+                              city:
+                                type: string
+                                description: City.
+                                nullable: true
+                              state:
+                                type: string
+                                description: State.
+                                nullable: true
+                              country:
+                                type: string
+                                description: Country.
+                                nullable: true
+                              postalCode:
+                                type: string
+                                description: 'Postal code (pt-br: "CEP").'
+                                nullable: true
+                              phone:
+                                type: string
+                                description: A string containing the phone number.
+                                nullable: true
+                  customer:
+                    type: object
+                    description: >-
+                      This object is used to pass on **customer data**, mainly
+                      for fraud prevention. Also, when using a saved card, only
+                      card tokens belonging to the user of this customer will
+                      work.
+                    nullable: true
+                    properties:
+                      iD:
+                        type: string
+                        description: A string that identifies the customer.
+                        nullable: true
+                      email:
+                        type: string
+                        description: Email.
+                        nullable: true
+                      name:
+                        type: string
+                        description: Full name.
+                        nullable: true
+                      document:
+                        type: string
+                        description: Document ID.
+                        nullable: true
+                      documentType:
+                        type: string
+                        description: >-
+                          Document ID type (pt-br: can be either "CPF" or
+                          "CNPJ"; can also be "SSN" or other types).
+                        nullable: true
+                      birthDate:
+                        type: string
+                        description: Birthday in date format.
+                        format: date
+                        nullable: true
+                      gender:
+                        type: string
+                        description: Customer's gender.
+                        nullable: true
+                      daysSinceRegistration:
+                        type: integer
+                        description: Days since customer's registration.
+                        format: int16
+                        nullable: true
+                      daysSinceLastLogin:
+                        type: integer
+                        description: Days since customer's last login date.
+                        format: int16
+                        nullable: true
+                      daysSinceLastPasswordChange:
+                        type: integer
+                        description: Days since customer's last password change date.
+                        format: int16
+                        nullable: true
+                      daysSinceLastPurchase:
+                        type: integer
+                        description: Days since customer's last purchase date.
+                        format: int16
+                        nullable: true
+                      daysSinceFirstPurchase:
+                        type: integer
+                        description: Days since customer's first purchase date.
+                        format: int16
+                        nullable: true
+                      data:
+                        type: object
+                        additionalProperties: {}
+                        description: Any additional data used to refer to the customer.
+                        nullable: true
+                  pix:
+                    type: object
+                    description: PIX specific information.
+                    nullable: true
+                    properties:
+                      name:
+                        type: string
+                        description: Full name.
+                        nullable: true
+                      document:
+                        type: string
+                        description: Document ID.
+                        nullable: true
+                      documentType:
+                        type: string
+                        description: >-
+                          Document ID type (pt-br: can be either "CPF" or
+                          "CNPJ"; can also be "SSN" or other types).
+                        nullable: true
+                      expirationSeconds:
+                        type: integer
+                        description: Validity of the PIX code in seconds.
+                        format: int32
+                        nullable: true
+                  softDescriptor:
+                    type: string
+                    description: >-
+                      The descriptor that shows up on the customer's statement
+                      after a transaction has been authorized.
+                    nullable: true
+            antiFraud:
+              type: object
+              description: This object holds specific anti-fraud data.
+              nullable: true
+              properties:
+                ean:
+                  type: string
+                  description: Ean product code.
+                  nullable: true
+                deliveryAddressee:
+                  type: string
+                  description: >-
+                    Name of the person receiving the goods at the delivery
+                    address.
+                  nullable: true
+                isEmailConfirmed:
+                  type: boolean
+                  description: States if the customer has verified his email address.
+                  nullable: true
+                wasCardChanged:
+                  type: boolean
+                  description: >-
+                    States if the customer has attempted to buy this order with
+                    a different card before.
+                  nullable: true
+                isPhoneNumberConfirmed:
+                  type: boolean
+                  description: Whether the customer has verified his phone number.
+                  nullable: true
+                loginCredential:
+                  type: string
+                  description: The username used to login (when logged in).
+                  nullable: true
+                isVIPClient:
+                  type: boolean
+                  description: >-
+                    States if this customer should be treated differently in a
+                    positive way (i.e., belongs to an allow list).
+                  nullable: true
+                isEmployeeClient:
+                  type: boolean
+                  description: Whether the customer is an employee of the merchant.
+                  nullable: true
+                wasAccountModified:
+                  type: boolean
+                  description: If the account has been modified.
+                  nullable: true
+                daysSinceLastAccountChange:
+                  type: integer
+                  description: The number of days since the account has been modified.
+                  format: int16
+                  nullable: true
+                fidelityNumber:
+                  type: string
+                  description: The fidelity number (when applied to this purchase).
+                  nullable: true
+                daysSinceFidelityRegistration:
+                  type: integer
+                  description: The number of days since the fidelity card was issued.
+                  format: int16
+                  nullable: true
+                daysSinceLastPointsExchange:
+                  type: integer
+                  description: >-
+                    The number of days since the fidelity card points were last
+                    used.
+                  format: int16
+                  nullable: true
+                fidelityBalance:
+                  type: integer
+                  description: Balance available at the fidelity card.
+                  format: int32
+                  nullable: true
+                amountPointsLastExchange:
+                  type: integer
+                  description: Amount of fidelity points used last time.
+                  format: int32
+                  nullable: true
+                phoneChargesInLast30Days:
+                  type: integer
+                  description: >-
+                    The number of recharges made to a prepaid phone number in
+                    the last 30 days.
+                  format: int16
+                  nullable: true
+                minutesChargedInLast30Days:
+                  type: integer
+                  description: >-
+                    The number of minutes charged to a prepaid phone number in
+                    the last 30 days.
+                  format: int16
+                  nullable: true
+                data:
+                  type: object
+                  description: >-
+                    An array of generic key-value pairs to input any additional
+                    anti-fraud data.
+                  nullable: true
+                  properties:
+                    key:
+                      type: string
+                      description: Dictionary key.
+                    value:
+                      type: string
+                      description: Dictionary value.
+            deliveryAddress:
+              type: object
+              description: An object that contains delivery address fields.
+              nullable: true
+              properties:
+                street:
+                  type: string
+                  description: Street name.
+                  nullable: true
+                number:
+                  type: string
+                  description: Building number.
+                  nullable: true
+                complement:
+                  type: string
+                  description: Address complement (e.g., apartment number).
+                  nullable: true
+                neighborhood:
+                  type: string
+                  description: Neighborhood.
+                  nullable: true
+                city:
+                  type: string
+                  description: City.
+                  nullable: true
+                state:
+                  type: string
+                  description: State.
+                  nullable: true
+                country:
+                  type: string
+                  description: Country.
+                  nullable: true
+                postalCode:
+                  type: string
+                  description: 'Postal code (pt-br: "CEP").'
+                  nullable: true
+                phone:
+                  type: string
+                  description: A string containing the phone number.
+                  nullable: true
+            countrycode:
+              type: string
+              description: Two letters ISO country code.
+              nullable: true
+            amount:
+              type: number
+              description: Total order amount.
+              format: double
+            salesChannel:
+              type: string
+              description: Origin of the purchase, e.g., web, app.
+              nullable: true
+        frontData:
+          type: object
+          description: >-
+            This object contains data that must be extracted from the frontend
+            of the checkout page.
+          nullable: true
+          properties:
+            sessionID:
+              type: string
+              description: A fingerprint ID produced by the anti-fraud being used.
+              nullable: true
+            ipAddress:
+              type: string
+              description: The ip address of the current session.
+              nullable: true
+            acceptHeader:
+              type: string
+              description: It is required when using 3DS.
+              nullable: true
+            userAgent:
+              type: string
+              description: It is required when using 3DS.
+              nullable: true
+            cookiesAccepted:
+              type: boolean
+              description: It is required when using 3DS.
+              nullable: true
+        isMerchantInitiated:
+          type: boolean
+          description: >-
+            Indicates whether the transaction was initiated by the merchant or
+            by the customer.
+          nullable: true
+        extraInfo:
+          type: string
+          description: >-
+            A string containing extra information. It is used just for
+            customizations.
+          nullable: true
+    InitResponseSchema:
+      type: object
+      properties: &ref_18
+        status:
+          type: string
+          description: >-
+            The status of the payment method. Please refer to the [payment
+            method status table](/api/tuna-codes#payment-method-status).
+          format: char
+          nullable: true
+        methods:
+          type: array
+          description: >-
+            An object containing all payment methods employed to perform the
+            payment. For large purchases, a customer may use multiple credit
+            cards, PIX, or, Boleto to complete the payment. As such, each method
+            with its status is included in the response.
+          nullable: true
+          items:
+            type: object
+            properties:
+              methodType:
+                type: string
+                description: >-
+                  A code that indicates the type of payment method. Possible
+                  values are found at [payment methods reference
+                  table](/api/tuna-codes#payment-methods).
+                format: char
+                nullable: true
+              status:
+                type: string
+                description: >-
+                  The overall status of a payment. Please refer to the [payment
+                  status reference table](/api/tuna-codes#payment-status).
+                format: char
+                nullable: true
+              methodId:
+                type: integer
+                description: >-
+                  A unique ID that identifies the payment method within the
+                  overall payment. For instance, if two payment methods were
+                  used in a given transaction, they will have IDs 0 and 1. In
+                  the next transaction, if three payment methods were used, they
+                  would have IDs 0, 1, and 2.
+                format: int16
+              operationId:
+                type: string
+                description: Operation identifier at Tuna.
+                nullable: true
+              methodKey:
+                type: string
+                description: Method identifier at Tuna.
+                nullable: true
+              message:
+                type: object
+                description: An object that contains the message fields.
+                nullable: true
+                properties:
+                  source:
+                    type: integer
+                    description: >-
+                      It is used to track the source of the message. Possible
+                      values are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                      <li>"Gateway"</li> <li>"Customization"</li> </ol>
+                    format: int32
+                  code:
+                    type: string
+                    description: >-
+                      Numeric code that states if the execution was successful
+                      or not. Positive numbers mean success; negative numbers
+                      indicate failures. Please refer to the [message code
+                      table](/api/tuna-codes#message-code-list) for a detailed
+                      list of all possible values.
+                    nullable: true
+                  message:
+                    type: string
+                    description: >-
+                      A human readable message that gives details about what the
+                      code means.
+                    nullable: true
+                  info:
+                    type: string
+                    description: >-
+                      When available, info gives further information about the
+                      execution of the process. This shouldn't matter for
+                      treating this response but can help dig information
+                      afterward. For example, it might contain internal messages
+                      from a payment method.
+                    nullable: true
+              additionalInfo:
+                type: object
+                additionalProperties: {}
+                description: Any additional data used to refer to the payment method.
+                nullable: true
+              redirectInfo:
+                type: object
+                description: Redirect information.
+                nullable: true
+                properties:
+                  url:
+                    type: string
+                    description: Link URL to be able to finish the payment transaction.
+                    nullable: true
+              pixInfo:
+                type: object
+                description: PIX specific information.
+                nullable: true
+                properties:
+                  qRContent:
+                    type: string
+                    description: A string containing QRcode.
+                    nullable: true
+                  qRImage:
+                    type: string
+                    description: A string containing the QRcode image url.
+                    nullable: true
+                  qrCopyPaste:
+                    type: string
+                    description: A string containing the QRcode copy and paste version.
+                    nullable: true
+              cryptoInfo:
+                type: object
+                description: >-
+                  Specific information related to payment with crypto
+                  currencies.
+                nullable: true
+                properties:
+                  coinValue:
+                    type: string
+                    description: >-
+                      The amount for the payment transaction in the requested
+                      crypto currency.
+                    nullable: true
+                  coinRateCurrency:
+                    type: string
+                    description: >-
+                      The rate currency of the crypto currency for the payment
+                      transaction.
+                    nullable: true
+                  coinAddr:
+                    type: string
+                    description: >-
+                      The "copy and paste" hash code related with this payment
+                      transaction.
+                    nullable: true
+                  coinQRCodeUrl:
+                    type: string
+                    description: The URL of the QRcode image of this payment transaction.
+                    nullable: true
+                  coin:
+                    type: string
+                    description: >-
+                      The crypto currency that is being used in the payment
+                      transaction.
+                    nullable: true
+        paymentKey:
+          type: string
+          description: The unique payment transaction identifier generated by Tuna.
+          nullable: true
+        partnerUniqueId:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        code:
+          type: integer
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success, negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          format: int32
+        message:
+          type: object
+          description: An object that contains the message fields.
+          nullable: true
+          properties:
+            source:
+              type: integer
+              description: >-
+                It is used to track the source of the message. Possible values
+                are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                <li>"Gateway"</li> <li>"Customization"</li> </ol>
+              format: int32
+            code:
+              type: string
+              description: >-
+                Numeric code that states if the execution was successful or not.
+                Positive numbers mean success; negative numbers indicate
+                failures. Please refer to the [message code
+                table](/api/tuna-codes#message-code-list) for a detailed list of
+                all possible values.
+              nullable: true
+            message:
+              type: string
+              description: >-
+                A human readable message that gives details about what the code
+                means.
+              nullable: true
+            info:
+              type: string
+              description: >-
+                When available, info gives further information about the
+                execution of the process. This shouldn't matter for treating
+                this response but can help dig information afterward. For
+                example, it might contain internal messages from a payment
+                method.
+              nullable: true
+        operationId:
+          type: string
+          description: Operation identifier at Tuna.
+          nullable: true
+    CancelRequestSchema:
+      type: object
+      properties: &ref_31
+        cardsDetail:
+          type: array
+          description: >-
+            List of card details that are going to be canceled in the payment
+            transaction.
+          nullable: true
+          items:
+            type: object
+            properties:
+              amount:
+                type: number
+                description: The amount to be canceled for the related payment transaction.
+                format: double
+              methodId:
+                type: integer
+                description: >-
+                  A unique ID that identifies the payment method within the
+                  overall payment. For instance, if two payment methods were
+                  used in a given transaction, they will have IDs 0 and 1. In
+                  the next transaction, if three payment methods were used, they
+                  would have IDs 0, 1, and 2.
+                format: int16
+                nullable: true
+              Splits:
+                type: array
+                description: >-
+                  List of splits that are going to be canceled in the payment
+                  transaction. This is required for partial refunds at split transactions.
+                items:
+                  type: object
+                  properties:
+                    MerchantID:
+                      type: string
+                      description: "The merchant ID of the split to cancel."
+                      nullable: true
+                    Amount:
+                      type: number
+                      format: decimal
+                      description: "The amount of the split to cancel."
+                      nullable: true
+                  nullable: true
+              data:
+                type: object
+                additionalProperties: {}
+                description: Any additional data used to refer to the card.
+                nullable: true
+        paymentKey:
+          type: string
+          description: The unique payment transaction identifier generated by Tuna.
+          nullable: true
+        partnerUniqueID:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        paymentDate:
+          type: string
+          description: The datetime of the payment.
+          format: date-time
+          nullable: true        
+        PixInfo:
+          type: object
+          description: >-
+            PIX information. This is required and only valid for Boleto refunds. Only authorized customers can use this feature.
+          properties:
+            PixKeyType:
+              type: string
+              description: >-
+                The type of the PIX key. Possible values are: <ol><li>"CPF"</li>
+                <li>"CNPJ"</li> <li>"Email"</li> <li>"Phone"</li>
+                <li>"Random"</li> </ol>
+              nullable: true
+            PixKey:
+              type: string
+              description: >-
+                The PIX key. It can be a CPF, CNPJ, email, phone number, or a
+                random key.
+              nullable: true
+            Document:
+              type: string
+              description: >-
+                The document number of the PIX key. It is required when the PIX
+                key is a CPF or CNPJ.
+              nullable: true
+            DocumentType:
+              type: string
+              description: >-
+                The document type of the PIX key. Possible values are: <ol><li>"CPF"</li>
+                <li>"CNPJ"</li> </ol>
+              nullable: true
+    CancelResponseSchema:
+      type: object
+      properties: &ref_36
+        status:
+          type: string
+          description: >-
+            The status of the payment method. Please refer to the [payment
+            method status table](/api/tuna-codes#payment-method-status).
+          format: char
+          nullable: true
+        methods:
+          type: array
+          description: >-
+            An object containing all payment methods employed to perform the
+            payment. For large purchases, a customer may use multiple credit
+            cards, PIX, or, Boleto to complete the payment. As such, each method
+            with its status is included in the response.
+          nullable: true
+          items:
+            type: object
+            properties:
+              methodType:
+                type: string
+                description: >-
+                  A code that indicates the type of payment method. Possible
+                  values are found at [payment methods reference
+                  table](/api/tuna-codes#payment-methods).
+                format: char
+                nullable: true
+              status:
+                type: string
+                description: >-
+                  The overall status of a payment. Please refer to the [payment
+                  status reference table](/api/tuna-codes#payment-status).
+                format: char
+                nullable: true
+              methodId:
+                type: integer
+                description: >-
+                  A unique ID that identifies the payment method within the
+                  overall payment. For instance, if two payment methods were
+                  used in a given transaction, they will have IDs 0 and 1. In
+                  the next transaction, if three payment methods were used, they
+                  would have IDs 0, 1, and 2.
+                format: int16
+              operationId:
+                type: string
+                description: Operation identifier at Tuna.
+                nullable: true
+              message:
+                type: object
+                description: An object that contains the message fields.
+                nullable: true
+                properties:
+                  source:
+                    type: integer
+                    description: >-
+                      It is used to track the source of the message. Possible
+                      values are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                      <li>"Gateway"</li> <li>"Customization"</li> </ol>
+                    format: int32
+                  code:
+                    type: string
+                    description: >-
+                      Numeric code that states if the execution was successful
+                      or not. Positive numbers mean success; negative numbers
+                      indicate failures. Please refer to the [message code
+                      table](/api/tuna-codes#message-code-list) for a detailed
+                      list of all possible values.
+                    nullable: true
+                  message:
+                    type: string
+                    description: >-
+                      A human readable message that gives details about what the
+                      code means.
+                    nullable: true
+                  info:
+                    type: string
+                    description: >-
+                      When available, info gives further information about the
+                      execution of the process. This shouldn't matter for
+                      treating this response but can help dig information
+                      afterward. For example, it might contain internal messages
+                      from a payment method.
+                    nullable: true
+        code:
+          type: integer
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success, negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          format: int32
+        message:
+          type: object
+          description: An object that contains the message fields.
+          nullable: true
+          properties:
+            source:
+              type: integer
+              description: >-
+                It is used to track the source of the message. Possible values
+                are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                <li>"Gateway"</li> <li>"Customization"</li> </ol>
+              format: int32
+            code:
+              type: string
+              description: >-
+                Numeric code that states if the execution was successful or not.
+                Positive numbers mean success; negative numbers indicate
+                failures. Please refer to the [message code
+                table](/api/tuna-codes#message-code-list) for a detailed list of
+                all possible values.
+              nullable: true
+            message:
+              type: string
+              description: >-
+                A human readable message that gives details about what the code
+                means.
+              nullable: true
+            info:
+              type: string
+              description: >-
+                When available, info gives further information about the
+                execution of the process. This shouldn't matter for treating
+                this response but can help dig information afterward. For
+                example, it might contain internal messages from a payment
+                method.
+              nullable: true
+        operationId:
+          type: string
+          description: Operation identifier at Tuna.
+          nullable: true
+    CancelItemRequestSchema:
+      type: object
+      properties: &ref_40
+        itemsDetail:
+          type: array
+          description: >-
+            List of items details that are going to be canceled in the payment
+            transaction.
+          nullable: true
+          items:
+            type: object
+            properties:
+              itemQuantity:
+                type: integer
+                description: The number of units to cancel.
+                format: int16
+                nullable: true
+              detailUniqueID:
+                type: string
+                description: >-
+                  An ID is used to identify this item inside your order. It
+                  can't be repeated inside the same order.
+                nullable: true
+        paymentKey:
+          type: string
+          description: The unique payment transaction identifier generated by Tuna.
+          nullable: true
+        partnerUniqueID:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        paymentDate:
+          type: string
+          description: The datetime of the payment.
+          format: date-time
+          nullable: true
+    CancelItemResponseSchema:
+      type: object
+      properties: &ref_44
+        status:
+          type: string
+          description: >-
+            The status of the payment method. Please refer to the [payment
+            method status table](/api/tuna-codes#payment-method-status).
+          format: char
+          nullable: true
+        methods:
+          type: array
+          description: >-
+            An object containing all payment methods employed to perform the
+            payment. For large purchases, a customer may use multiple credit
+            cards, PIX, or, Boleto to complete the payment. As such, each method
+            with its status is included in the response.
+          nullable: true
+          items:
+            type: object
+            properties:
+              status:
+                type: string
+                description: >-
+                  The overall status of a payment. Please refer to the [payment
+                  status reference table](/api/tuna-codes#payment-status).
+                format: char
+                nullable: true
+              partnerUniqueId:
+                type: string
+                description: Your unique ID for the order. It is used to track the order.
+                nullable: true
+              methodType:
+                type: string
+                description: >-
+                  A code that indicates the type of payment method. Possible
+                  values are found at [payment methods reference
+                  table](/api/tuna-codes#payment-methods).
+                format: char
+                nullable: true
+              methodId:
+                type: integer
+                description: >-
+                  A unique ID that identifies the payment method within the
+                  overall payment. For instance, if two payment methods were
+                  used in a given transaction, they will have IDs 0 and 1. In
+                  the next transaction, if three payment methods were used, they
+                  would have IDs 0, 1, and 2.
+                format: int16
+              operationId:
+                type: string
+                description: Operation identifier at Tuna.
+                nullable: true
+              message:
+                type: object
+                description: An object that contains the message fields.
+                nullable: true
+                properties:
+                  source:
+                    type: integer
+                    description: >-
+                      It is used to track the source of the message. Possible
+                      values are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                      <li>"Gateway"</li> <li>"Customization"</li> </ol>
+                    format: int32
+                  code:
+                    type: string
+                    description: >-
+                      Numeric code that states if the execution was successful
+                      or not. Positive numbers mean success; negative numbers
+                      indicate failures. Please refer to the [message code
+                      table](/api/tuna-codes#message-code-list) for a detailed
+                      list of all possible values.
+                    nullable: true
+                  message:
+                    type: string
+                    description: >-
+                      A human readable message that gives details about what the
+                      code means.
+                    nullable: true
+                  info:
+                    type: string
+                    description: >-
+                      When available, info gives further information about the
+                      execution of the process. This shouldn't matter for
+                      treating this response but can help dig information
+                      afterward. For example, it might contain internal messages
+                      from a payment method.
+                    nullable: true
+        code:
+          type: integer
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success, negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          format: int32
+        message:
+          type: object
+          description: An object that contains the message fields.
+          nullable: true
+          properties:
+            source:
+              type: integer
+              description: >-
+                It is used to track the source of the message. Possible values
+                are: <ol><li>"Engine"</li> <li>"AntiFraud"</li>
+                <li>"Gateway"</li> <li>"Customization"</li> </ol>
+              format: int32
+            code:
+              type: string
+              description: >-
+                Numeric code that states if the execution was successful or not.
+                Positive numbers mean success; negative numbers indicate
+                failures. Please refer to the [message code
+                table](/api/tuna-codes#message-code-list) for a detailed list of
+                all possible values.
+              nullable: true
+            message:
+              type: string
+              description: >-
+                A human readable message that gives details about what the code
+                means.
+              nullable: true
+            info:
+              type: string
+              description: >-
+                When available, info gives further information about the
+                execution of the process. This shouldn't matter for treating
+                this response but can help dig information afterward. For
+                example, it might contain internal messages from a payment
+                method.
+              nullable: true
+        operationId:
+          type: string
+          description: Operation identifier at Tuna.
+          nullable: true
+    CaptureRequestSchema:
+      type: object
+      properties: &ref_48
+        amount:
+          type: number
+          description: The total value paid by the payment method.
+          format: double
+          nullable: true
+        cardsDetail:
+          type: array
+          description: >-
+            List of card details that are going to be canceled in the payment
+            transaction.
+          items:
+            type: object
+            properties:
+              amount:
+                type: number
+                description: The amount to be canceled for the related payment transaction.
+                format: double
+              methodId:
+                type: integer
+                description: >-
+                  A code that indicates the type of payment method. Possible
+                  values are found at [payment methods reference
+                  table](/api/tuna-codes#payment-methods).
+                format: int16
+                nullable: true
+        paymentKey:
+          type: string
+          description: The unique payment transaction identifier generated by Tuna.
+          nullable: true
+        partnerUniqueID:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        paymentDate:
+          type: string
+          description: The datetime of the payment.
+          format: date-time
+          nullable: true
+    CreatePaymentLinkRequestSchema:
+      type: object
+      properties: &ref_70
+        description:
+          type: string
+          description: A text used do identify this payment link, this is visible at the link itself.
+        amount:
+          type: string
+          description: Total due amount of the payment link.
+        expirationinminutes:
+          type: integer
+          format: int32
+          description: Duration in minutes of this link. The link wont't me payable after this time.
+        partnerUniqueId:
+          type: string
+          description: Your order number/identifier.
+          nullable: true
+        split:
+          type: object
+          description: This object is required when using split payments.
+          nullable: true
+          properties:
+            externalID:
+              type: string
+              description: Your unique ID for the merchant.
+              nullable: true
+        customer:
+          type: object
+          description: (experimental)Optional customer data to pre-populate fields at the payment link.
+          nullable: true
+          properties:
+            name:
+              type: string
+              description: Customer name.
+            phone:
+              type: string
+              description: Customer phone number.
+            birthday:
+              type: string
+              format: datetime
+              description: Customer birth date.
+              nullable: true
+            document_type:
+              type: string
+              description: Document type(CPF, CNPJ, SSN).
+            document:
+              type: string
+              description: Document number.
+            merchant_id:
+              type: string
+              description: The Id of the merchant when using split payments.
+        items:
+          type: array
+          description: An array of payment items.
+          nullable: true
+          items:
+            type: object
+            properties:
+              detailUniqueID:
+                type: string
+                description: >-
+                  An ID is used to identify this item inside your order. It
+                  can't be repeated inside the same order.
+                nullable: true
+              sku:
+                type: string
+                description: >-
+                  A product identifier. A stock-keeping unit (SKU) is a
+                  scannable bar code, most often seen printed on product
+                  labels.
+                nullable: true
+              ean:
+                type: string
+                description: >-
+                  Similar to SKU. The International Article Number, also
+                  known as European Article Number (EAN), is a standard
+                  describing a barcode symbology and numbering system. It is
+                  used in global trade to identify a specific retail product
+                  type, a specific packaging configuration, and a specific
+                  manufacturer.
+                nullable: true
+              amount:
+                type: number
+                description: The value of each unit of this payment item.
+                format: double
+              productID:
+                type: integer
+                description: An internal product identifier.
+                format: int32
+                nullable: true
+              productDescription:
+                type: string
+                description: Short description of the product, e.g., white shirt.
+                nullable: true
+              imageUrl:
+                type: string
+                description: Image url of the product.
+                nullable: true
+              categoryID:
+                type: integer
+                description: A numeric category identifier of the item category.
+                format: int32
+                nullable: true
+              categoryName:
+                type: string
+                description: The name of the item category.
+                nullable: true
+              itemQuantity:
+                type: integer
+                description: The number of units included in this item.
+                format: int16
+              split:
+                type: object
+                description: This object is required when using split payments.
+                nullable: true
+                properties:
+                  externalID:
+                    type: string
+                    description: Your unique ID for the merchant.
+                    nullable: true
+        billingaddress:
+          description: (experimental)Optional customer billing address data to pre-populate fields at the payment link.
+          nullable: true
+          type: object
+          properties:
+            state:
+              type: string
+              description: RJ
+            city:
+              type: string
+              description: Rio de Janeiro
+            neighborhood:
+              type: string
+              description: Lagoa
+            street:
+              type: string
+              description: Rua Professor Abelardo Lobo
+            number:
+              type: string
+              description: 14
+            complement:
+              type: string
+              description: 502
+            postal_code:
+              type: string
+              description: 22470240
+        deliveryaddress:
+          description: (experimental)Optional customer delivery address data to pre-populate fields at the payment link.
+          nullable: true
+          type: object
+          properties:
+            state:
+              type: string
+              description: RJ
+            city:
+              type: string
+              description: Rio de Janeiro
+            neighborhood:
+              type: string
+              description: Lagoa
+            street:
+              type: string
+              description: Rua Professor Abelardo Lobo
+            number:
+              type: string
+              description: 14
+            complement:
+              type: string
+              description: 502
+            postal_code:
+              type: string
+              description: 22470240
+        urlSuccessReturn:
+          type: string
+          description: If provided page will automatically redirect to this page after a successful payment.
+        urlPendingReturn:
+          type: string
+          description: If provided page will automatically redirect to this page after a pending payment.
+        urlFailReturn:
+          type: string
+          description: If provided page will automatically redirect to this page after a falied payment.
+        urlExpiredReturn:
+          type: string
+          description: If provided, after the link expires a message and a button to return(to this url) will be this displayed.
+        expiredPaymentInfo:
+          type: string
+          description: Text to be displayed on screen after the link expires.
+        expiredPaymentButtonLabel:
+          type: string
+          description: Text to be displayed at the button to return to your website after the link expires.
+        logoURL:
+          type: string
+          description: If provided, set the checkout merchant logo. Before using this attribute, please contact Tuna to put your CDN domain in our allow list.
+        mainColor:
+          type: string
+          description: If provided, set the main color of the checkout page. Can be wither a named color or hexadecimal. This property will be considered only if logoURL property is avaliable
+        storeName:
+          type: string
+          description: A store name to be displayed next to the logo.
+        loginData:
+          description: If provided, the login field will be populated with the information. If both fields are provided, only the email field will be considered.
+          nullable: true
+          type: object
+          properties:
+            email:
+              type: string
+              description: User's email address
+            phone:
+              type: string
+              description: User's phone number
+        hideHeader:
+          type: bool
+          description: A flag property to determine if the checkout page header will be displayed
+        hideCart:
+          type: bool
+          description: A flag property to determine if the checkout page cart detail will be displayed
+        hideFooter:
+          type: bool
+          description: A flag property to determine if the checkout page footer will be displayed
+        deliveryAmount:
+          type: decimal
+          description: The delivery fee value amount
+        type:
+          type: string
+          description: Payment method types to be made available at the link.
+                       <br>Possible values are&#58;<br>
+                       <ul><li>'1' => Credit Card</li>
+                       <li>'D' => PIX</li>
+                       <li>'3' => Boleto</li>
+                       <li>'E' => Crypto</li>
+                       <li>'U' => Undefined</li>
+                       <ul><br>
+                       Undefined means any available payment method allowed.
+        maxInstallments:
+          type: integer
+          format: int32
+          description: The maximum number of installments allowed for this payment link when paying with credit cards.
+        installments:
+          type: integer
+          format: int32
+          description: The number of installments allowed for this payment link when paying with credit cards. If provided, the maxInstallments property will be ignored.
+    StatusRequestSchema:
+      type: object
+      properties: &ref_50
+        paymentKey:
+          type: string
+          description: >-
+            The unique transaction ID generated by the payment gateway. To
+            request the transaction status, you must either include the ID from
+            the client platform or the ID from the payment gateway. If you
+            provide both and they correspond to different transactions, an error
+            will result.
+          nullable: true
+    CreatePaymentLinkResponseSchema:
+      type: object
+      properties: &ref_74
+        paymentLink:
+          type: object
+          properties:
+            partnerId:
+              type: integer
+              format: int32
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            partnerAccountId:
+              type: integer
+              format: int32
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            serviceId:
+              type: integer
+              format: int32
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            externalPaymentId:
+              type: string
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            processingStatus:
+              type: string
+              description: Internal status at Tuna, send this to tuna when debugging issues.
+            paymentDate:
+              type: string
+              description: Payment date, send this to tuna when debugging issues.
+            paymentId:
+              type: integer
+              format: int32
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            detail:
+              type: object
+              properties:
+                paymentKey:
+                  type: string
+                  description: The Id of this payment, key for searching at Tuna.
+                paymentExternalRedirectType:
+                  type: string
+                  description: Internal Id at Tuna, send this to tuna when debugging issues.
+                paymentExternalRedirectSessionID:
+                  type: string
+                  description: Internal Id at Tuna, send this to tuna when debugging issues.
+                maxInstallments:
+                  type: integer
+                  format: int32
+                customerId:
+                  type: string
+                paymentId:
+                  type: integer
+                  format: int32
+                amount:
+                  type: integer
+                  format: int32
+                customer:
+                  type: object
+                  properties:
+                    id:
+                      type: string
+                deliveryAddress:
+                  type: object
+                  properties:
+                    state:
+                      type: string
+                      description: RJ
+                    city:
+                      type: string
+                      description: Rio de Janeiro
+                    neighborhood:
+                      type: string
+                      description: Lagoa
+                    street:
+                      type: string
+                      description: Rua Professor Abelardo Lobo
+                    number:
+                      type: string
+                      description: 14
+                    complement:
+                      type: string
+                      description: 502
+                    postal_code:
+                      type: string
+                      description: 22470240
+            redirectionGuid:
+              type: string
+              description: Internal Id at Tuna, send this to tuna when debugging issues.
+            expirationTimestamp:
+              type: string
+              description: Timestamp that indicates when the link will expire.
+            description:
+              type: string
+              description: Description of the payment link.
+            status:
+              type: string
+              description: >-
+                The status of the payment method. Please refer to the [payment
+                method status table](/api/tuna-codes#payment-method-status).
+            creationDate:
+              type: string
+              description: Creation date of the payment link.
+            url:
+              type: string
+              description: The url of the payment link.
+            partnerUniqueId:
+              type: string
+              description: Your order number.
+    StatusResponseSchema:
+      type: object
+      properties: &ref_54
+        status:
+          type: string
+          description: >-
+            The status of the payment method. Please refer to the [payment
+            method status table](/api/tuna-codes#payment-method-status).
+          format: char
+          nullable: true
+        statusDescription:
+          type: string
+          description: >-
+            The text description related with payment status code given by the
+            property **status**.
+          nullable: true
+        methods:
+          type: array
+          description: >-
+            An object containing all payment methods employed to perform the
+            payment. For large purchases, a customer may use multiple credit
+            cards, PIX, or, Boleto to complete the payment. As such, each method
+            with its status is included in the response.
+          nullable: true
+          items:
+            type: object
+            properties:
+              statusDescription:
+                type: string
+                description: >-
+                  The text description related with payment status code given by
+                  the property **status**.
+                nullable: true
+              methodType:
+                type: string
+                description: >-
+                  A code that indicates the type of payment method. Possible
+                  values are found at [payment methods reference
+                  table](/api/tuna-codes#payment-methods).
+                format: char
+                nullable: true
+              status:
+                type: string
+                description: >-
+                  The overall status of a payment. Please refer to the [payment
+                  status reference table](/api/tuna-codes#payment-status).
+                format: char
+                nullable: true
+              methodId:
+                type: integer
+                description: >-
+                  A unique ID that identifies the payment method within the
+                  overall payment. For instance, if two payment methods were
+                  used in a given transaction, they will have IDs 0 and 1. In
+                  the next transaction, if three payment methods were used, they
+                  would have IDs 0, 1, and 2.
+                format: int16
+              capturedAmount:
+                type: number
+                description: >-
+                  The captured amount of this payment method.
+                format: double
+              balanceAmount:
+                type: number
+                description: >-
+                  Current avaiable balance for this payment method.
+                format: double
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+  securitySchemes:
+    Account:
+      type: apiKey
+      in: header
+      name: x-tuna-account
+    AppToken:
+      type: apiKey
+      in: header
+      name: x-tuna-apptoken
+  examples:
+    InitRequestTemplate:
+      summary: Example Template
+      value: &ref_1
+        tokenSession: uuid
+        partnerUniqueID: string
+        customer:
+          iD: string
+          email: string
+          name: string
+          document: string
+          documentType: string
+          birthDate: date
+          gender: string
+          daysSinceRegistration: int16
+          daysSinceLastLogin: int16
+          daysSinceLastPasswordChange: int16
+          daysSinceLastPurchase: int16
+          daysSinceFirstPurchase: int16
+        vendor:
+          mCC: string
+          code: string
+          industry: string
+          document: string
+          documentType: string
+          daysSinceRegistration: int16
+          daysSinceLastSell: int16
+          daysSinceFirstSell: int16
+        paymentItems:
+          items:
+            - detailUniqueID: string
+              sku: string
+              ean: string
+              amount: double
+              productID: int32
+              productDescription: string
+              categoryID: int32
+              categoryName: string
+              itemQuantity: int16
+              split:
+                merchantID: string
+                merchantDocument: string
+                merchantDocumentType: string
+                percent: double
+                amount: double
+              antiFraud:
+                ean: string
+                deliveryAddressee: string
+                isEmailConfirmed: boolean
+                wasCardChanged: boolean
+                isPhoneNumberConfirmed: boolean
+                loginCredential: string
+                isVIPClient: boolean
+                isEmployeeClient: boolean
+                wasAccountModified: boolean
+                daysSinceLastAccountChange: int16
+                fidelityNumber: string
+                daysSinceFidelityRegistration: int16
+                daysSinceLastPointsExchange: int16
+                fidelityBalance: int32
+                amountPointsLastExchange: int32
+                phoneChargesInLast30Days: int16
+                minutesChargedInLast30Days: int16
+                data:
+                  key: string
+                  value: string
+              presentMessage: string
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: char
+              amount: double
+              installments: int16
+              cardInfo:
+                token: uuid
+                tokenProvider: string
+                cardHolderName: string
+                alias: string
+                expirationMonth: int16
+                expirationYear: int16
+                billingInfo:
+                  number: string
+                  document: string
+                  documentType: string
+                  name: string
+                  phone: string
+                  address:
+                    street: string
+                    number: string
+                    complement: string
+                    neighborhood: string
+                    city: string
+                    state: string
+                    country: string
+                    postalCode: string
+                    phone: string
+                externalProviderInfo: string
+                brandName: string
+                tokenSingleUse: int32
+                saveCard: boolean
+              boletoInfo:
+                billingInfo:
+                  number: string
+                  document: string
+                  documentType: string
+                  name: string
+                  phone: string
+                  address:
+                    street: string
+                    number: string
+                    complement: string
+                    neighborhood: string
+                    city: string
+                    state: string
+                    country: string
+                    postalCode: string
+                    phone: string
+              customer:
+                iD: string
+                email: string
+                name: string
+                document: string
+                documentType: string
+                birthDate: date
+                gender: string
+                daysSinceRegistration: int16
+                daysSinceLastLogin: int16
+                daysSinceLastPasswordChange: int16
+                daysSinceLastPurchase: int16
+                daysSinceFirstPurchase: int16
+              pix:
+                name: string
+                document: string
+                documentType: string
+                expirationSeconds: int32
+              softDescriptor: string
+          antiFraud:
+            ean: string
+            deliveryAddressee: string
+            isEmailConfirmed: boolean
+            wasCardChanged: boolean
+            isPhoneNumberConfirmed: boolean
+            loginCredential: string
+            isVIPClient: boolean
+            isEmployeeClient: boolean
+            wasAccountModified: boolean
+            daysSinceLastAccountChange: int16
+            fidelityNumber: string
+            daysSinceFidelityRegistration: int16
+            daysSinceLastPointsExchange: int16
+            fidelityBalance: int32
+            amountPointsLastExchange: int32
+            phoneChargesInLast30Days: int16
+            minutesChargedInLast30Days: int16
+            data:
+              key: string
+              value: string
+          deliveryAddress:
+            street: string
+            number: string
+            complement: string
+            neighborhood: string
+            city: string
+            state: string
+            country: string
+            postalCode: string
+            phone: string
+          countrycode: string
+          amount: double
+          salesChannel: string
+        frontData:
+          sessionID: string
+          ipAddress: string
+          acceptHeader: string
+          userAgent: string
+          cookiesAccepted: boolean
+        isMerchantInitiated: boolean
+        extraInfo: string
+    InitRequestPaymentPix:
+      summary: Payment (Pix)
+      value: &ref_2
+        partnerUniqueId: '#032'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: D
+              amount: 20
+              pix:
+                name: Maju Cheapetta
+                document: 744.479.870-23
+                documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestPaymentBoleto:
+      summary: Payment (Boleto)
+      value: &ref_3
+        partnerUniqueId: '#030'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '3'
+              amount: 20
+              boletoInfo:
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestPaymentCrypto:
+      summary: Payment (Crypto)
+      value: &ref_4
+        partnerUniqueId: '#035'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: E
+              amount: 20
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestPaymentSplit:
+      summary: Split Payment
+      value: &ref_5
+        tokenSession: >-
+          RXD+8UFZiK3nipWGtsXasurjeM5e0vwDkPWYaQR0nco1HankASsxfvFZ99upUq1vbIjeuGFYbby42tLAcpQordpoeOmRb0MJDkFDyQ==
+        partnerUniqueId: '#040'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+              split:
+                merchantId: '##001'
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Captured
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestPaymentAntifraud:
+      summary: Credit Card Payment with Antifraud
+      value: &ref_6
+        TokenSession: >-
+          0cLqHdd/hJQT9fmnGBTFjunnhjek6oqdv+naWnGz6U2mTAcsbb/U5yFgLZthw5CDgjRj6anCEyckVuanzgVQtGacx+E=
+        PartnerUniqueID: '104'
+        Customer:
+          Email: test2@tuna.uy
+          Name: Test User
+          ID: tuna_123s4
+          Document: 919.412.410-85
+          DocumentType: CPF
+          Gender: M
+          DaysSinceRegistration: 5
+          DaysSinceLastLogin: 2
+          DaysSinceLastPasswordChange: null
+          DaysSinceLastPurchase: 2
+          DaysSinceFirstPurchase: 2
+        Vendor:
+          MCC: '5947'
+          Code: EC-123
+          Industry: Gift shop
+          Name: ACME
+          Document: 38.788.507/0001-24
+          DocumentType: CNPJ
+          DaysSinceRegistration: 300
+          DaysSinceLastSell: 20
+          DaysSinceFirstSell: 300
+        PaymentItems:
+          Items:
+            - Amount: 200
+              ProductDescription: item1
+              ItemQuantity: 1
+              CategoryName: Category name
+              Ean: A-121321
+              AntiFraud:
+                DeliveryAddressee: Antonia
+                IsEmailConfirmed: true
+                IsPhoneNumberConfirmed: false
+                customerSince: 61
+                Data:
+                  CustomField1: AnyValue
+                  CustomObject1:
+                    name: value
+        PaymentData:
+          PaymentMethods:
+            - PaymentMethodType: '1'
+              Amount: 200
+              Installments: 1
+              SoftDescriptor: ACME
+              CardInfo:
+                CardNumber: null
+                CardHolderName: Tuna Test User
+                BrandName: Master
+                ExpirationMonth: null
+                ExpirationYear: null
+                Token: 11e02526-e82c-4ac1-b509-fa459b205bfd
+                TokenProvider: Tuna
+                TokenSingleUse: 0
+                SaveCard: false
+                BillingInfo:
+                  Document: 919.412.410-85
+                  DocumentType: CPF
+                  Address:
+                    Street: Ses Av. Das Nações
+                    Number: Q811
+                    Complement: Bloco G
+                    Neighborhood: Brasilia
+                    City: Brasilia
+                    State: DF
+                    Country: BR
+                    PostalCode: 70429-900
+                    Phone: (61) 324 421 21
+          Countrycode: BR
+          AntiFraud:
+            DeliveryAddressee: Antonia
+          DeliveryAddress:
+            Street: Ses Av. Das Nações
+            Number: Q811
+            Complement: Bloco H
+            Neighborhood: Brasilia
+            City: Brasilia
+            State: DF
+            Country: BR
+            PostalCode: 70429-900
+            Phone: (61) 324 421 21
+        FrontData:
+          SessionID: 6793ef3ab449499abb5fe3999edabde7
+          Origin: WEBSITE
+          IpAddress: 192.168.0.5
+          CookiesAccepted: true
+    InitRequestGiftCard:
+      summary: Gift Card Payment
+      value: &ref_7
+        TokenSession: >-
+          0cLqHdd/hJQT9fmnGBTFjunnhjek6oqdv+naWnGz6U2mTAcsbb/U5yFgLZthw5CDgjRj6anCEyckVuanzgVQtGacx+E=
+        PartnerUniqueID: '48'
+        Customer:
+          Email: test2@tuna.uy
+          Name: Test User
+          ID: tuna_123s4
+          Document: 919.412.410-85
+          DocumentType: CPF
+          Gender: M
+          DaysSinceRegistration: 5
+          DaysSinceLastLogin: 2
+          DaysSinceLastPasswordChange: null
+          DaysSinceLastPurchase: 2
+          DaysSinceFirstPurchase: 2
+        PaymentItems:
+          Items:
+            - DetailUniqueID: '12272566005'
+              Amount: 107.87
+              ProductID: 461
+              ProductDescription: Camisa Social Slim
+              CategoryID: 0
+              ItemQuantity: 1
+        PaymentData:
+          PaymentMethods:
+          - PaymentMethodType: '1'
+            Amount: 37.1
+            Installments: 1
+            SoftDescriptor: ACME
+            CardInfo:
+              TokenProvider: GooglePay
+              Token: '{"signature":"MEUCIQCS+R3wgLMdMFZrJesAOhVXApDSimD0qatIW8CHcfIL+wIgey0ITfkYD/DJ5Sk894OmlxLjqQa1m3cwb3PQGSU1Kqs\u003d","intermediateSigningKey":{"signedKey":"{\"keyValue\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWAtZhlnOtzIW5jo9kvdePavI2nlM6pCVYqDRP2QnWcHEDGEoeBwpZGV9Bnn0EHFSIyZk05o9Jb3bJZoN/bCRcQ\\u003d\\u003d\",\"keyExpiration\":\"1671503157000\"}","signatures":["MEUCIQCX0I6usN5y6g/jGYnZum+m/TQ4OCjYgxeKjPJ7KgAc1wIgVR/ufnWds1bgVO/bTRJB82XS2eyDrbxEpKVeWAjql4Q\u003d"]},"protocolVersion":"ECv2","signedMessage":"{\"encryptedMessage\":\"6+ztGNoKypq+qn3q3QV8qZRYlhKrsHoAgw+CijtCZCfxc5MfWyATxLVo9vwIxPkHaXzzpBR/5GFwr1tjqJrwRbQXEMXTKVzlT84xYmD+/OiHR34qTajsD2Cf6cIki8I3ujxJof+shlfFt496pt7PcKdkiNXUY9ao65iUAYfMDhDFIT5yFjVSa2XAeEkiUUlfOJPw048O+En81XzgeuJnFphsDnmuVg2+dtLIoaX3xXICq3A7qlVZA0k55YIa+lMURrfeIwzqLYv1gwK7LQ2E3pTsMT1+S5XSx54wQ0EfddKogV4DqRwrY3wi20SElE728hPxA2k+4bSCLnFtSCENnT6cJl1qQdV+b+NnHlBLSBgwiDi4GNpwpDRwEfXTCQAwCQ+rKfT6h1e82KGooDvJe/+fiaDXU0qZbRdxnpJYnEkQ5s/qhYx6Uz24mV7Hp7yrJwwicbOBDYjeCxHJVU9oTsKMIFpl7ETFiGIEPK4D6ZADbn1zBksdP1UiD7ywVCUl8iqS5sLbz8rDlQf8VEsfIBMQJO2fjn8Zkbp7U20IYFuorHJrJLhHOifLe5WVnTmbJ7rALGKZwHDr\",\"ephemeralPublicKey\":\"BDHQu/pqr8J7Uc6HI7vQIdbj3ZVbimmm14ceeh0TbeetnMK8GzgLkkSR90rT0zN8qqJ5AVkxIblRLCXlT2w0rqs\\u003d\",\"tag\":\"FlKG69l3V/EHSbxY27L3zYMKJvwrQhMJ7gLPYHczVuY\\u003d\"}"}'
+          Countrycode: BR
+          Amount: 0
+        FrontData:
+          SessionID: 6793ef3ab449499abb5fe3999edabde7
+          Origin: WEBSITE
+          IpAddress: 192.168.0.5
+          CookiesAccepted: true
+    InitRequestExternalPaypal:
+      summary: External Payment (PayPal)
+      value: &ref_8
+        PartnerUniqueID: '200'
+        Customer:
+          Email: test2@tuna.uy
+          Name: Test User
+          ID: tuna_123s4
+          Document: 919.412.410-85
+          DocumentType: CPF
+          Gender: M
+          DaysSinceRegistration: 5
+          DaysSinceLastLogin: 2
+          DaysSinceLastPasswordChange: null
+          DaysSinceLastPurchase: 2
+          DaysSinceFirstPurchase: 2
+        Vendor:
+          MCC: '5947'
+          Code: EC-123
+          Industry: Gift shop
+          Name: ACME
+          Document: 38.788.507/0001-24
+          DocumentType: CNPJ
+          DaysSinceRegistration: 300
+          DaysSinceLastSell: 20
+          DaysSinceFirstSell: 300
+        PaymentItems:
+          Items:
+            - Amount: 200
+              ProductDescription: item1
+              ItemQuantity: 2
+              CategoryName: Category name
+              Ean: A-121321
+              AntiFraud:
+                DeliveryAddressee: Antonia
+        PaymentData:
+          PaymentMethods:
+            - PaymentMethodType: '9'
+              Amount: 400
+              Installments: 1
+              SoftDescriptor: ACME
+              CardInfo:
+                BillingInfo:
+                  Number: B9AT91093X4886194X
+                Data:
+                  Description: Compra na Tuna
+                  quoteID: >-
+                    A21AAEpXJ1UsHHFAYmaJDwRXQbmddGwd27DKE2KWq0m-GsEXLY5FFzdldDQWujFJZ-VHWVALZMsPdIkYOkMuye0EIiVP4VYYA
+          Countrycode: BR
+          DeliveryAddress:
+            Street: Ses Av. Das Nações
+            Number: Q811
+            Complement: Bloco H
+            Neighborhood: Brasilia
+            City: Brasilia
+            State: DF
+            Country: BR
+            PostalCode: 70429-900
+            Phone: (61) 324 421 21
+        FrontData:
+          SessionID: Bearer
+          IpAddress: 192.168.0.5
+    InitRequestGooglePay:
+      summary: Credit Card Payment with Google Pay
+      value: &ref_9
+        TokenSession: >-
+          0cLqHdd/hJQT9fmnGBTFjunnhjek6oqdv+naWnGz6U2mTAcsbb/U5yFgLZthw5CDgjRj6anCEyckVuanzgVQtGacx+E=
+        PartnerUniqueID: '48'
+        Customer:
+          Email: test2@tuna.uy
+          Name: Test User
+          ID: tuna_123s4
+          Document: 919.412.410-85
+          DocumentType: CPF
+          Gender: M
+          DaysSinceRegistration: 5
+          DaysSinceLastLogin: 2
+          DaysSinceLastPasswordChange: null
+          DaysSinceLastPurchase: 2
+          DaysSinceFirstPurchase: 2
+        PaymentItems:
+          Items:
+            - DetailUniqueID: '12272566005'
+              Amount: 107.87
+              ProductID: 461
+              ProductDescription: Camisa Social Slim
+              CategoryID: 0
+              ItemQuantity: 1
+        PaymentData:
+          PaymentData:
+          PaymentMethods:
+          - PaymentMethodType: '1'
+            Amount: 37.1
+            Installments: 1
+            SoftDescriptor: ACME
+            CardInfo:
+              TokenProvider: GooglePay
+              Token: '{"signature":"MEUCIQCS+R3wgLMdMFZrJesAOhVXApDSimD0qatIW8CHcfIL+wIgey0ITfkYD/DJ5Sk894OmlxLjqQa1m3cwb3PQGSU1Kqs\u003d","intermediateSigningKey":{"signedKey":"{\"keyValue\":\"MFkwEwYHKoZIzj0CAQYIKoZIzj0DAQcDQgAEWAtZhlnOtzIW5jo9kvdePavI2nlM6pCVYqDRP2QnWcHEDGEoeBwpZGV9Bnn0EHFSIyZk05o9Jb3bJZoN/bCRcQ\\u003d\\u003d\",\"keyExpiration\":\"1671503157000\"}","signatures":["MEUCIQCX0I6usN5y6g/jGYnZum+m/TQ4OCjYgxeKjPJ7KgAc1wIgVR/ufnWds1bgVO/bTRJB82XS2eyDrbxEpKVeWAjql4Q\u003d"]},"protocolVersion":"ECv2","signedMessage":"{\"encryptedMessage\":\"6+ztGNoKypq+qn3q3QV8qZRYlhKrsHoAgw+CijtCZCfxc5MfWyATxLVo9vwIxPkHaXzzpBR/5GFwr1tjqJrwRbQXEMXTKVzlT84xYmD+/OiHR34qTajsD2Cf6cIki8I3ujxJof+shlfFt496pt7PcKdkiNXUY9ao65iUAYfMDhDFIT5yFjVSa2XAeEkiUUlfOJPw048O+En81XzgeuJnFphsDnmuVg2+dtLIoaX3xXICq3A7qlVZA0k55YIa+lMURrfeIwzqLYv1gwK7LQ2E3pTsMT1+S5XSx54wQ0EfddKogV4DqRwrY3wi20SElE728hPxA2k+4bSCLnFtSCENnT6cJl1qQdV+b+NnHlBLSBgwiDi4GNpwpDRwEfXTCQAwCQ+rKfT6h1e82KGooDvJe/+fiaDXU0qZbRdxnpJYnEkQ5s/qhYx6Uz24mV7Hp7yrJwwicbOBDYjeCxHJVU9oTsKMIFpl7ETFiGIEPK4D6ZADbn1zBksdP1UiD7ywVCUl8iqS5sLbz8rDlQf8VEsfIBMQJO2fjn8Zkbp7U20IYFuorHJrJLhHOifLe5WVnTmbJ7rALGKZwHDr\",\"ephemeralPublicKey\":\"BDHQu/pqr8J7Uc6HI7vQIdbj3ZVbimmm14ceeh0TbeetnMK8GzgLkkSR90rT0zN8qqJ5AVkxIblRLCXlT2w0rqs\\u003d\",\"tag\":\"FlKG69l3V/EHSbxY27L3zYMKJvwrQhMJ7gLPYHczVuY\\u003d\"}"}'
+          Countrycode: BR
+          Amount: 0
+        FrontData:
+          SessionID: 6793ef3ab449499abb5fe3999edabde7
+          Origin: WEBSITE
+          IpAddress: 192.168.0.5
+          CookiesAccepted: true
+    InitRequestMultipleSessionIds:
+      summary: Multiple SessionIds
+      value: &ref_10
+        TokenSession: >-
+          0cLqHdd/hJQT9fmnGBTFjunnhjek6oqdv+naWnGz6U2mTAcsbb/U5yFgLZthw5CDgjRj6anCEyckVuanzgVQtGacx+E=
+        PartnerUniqueID: '201'
+        Customer:
+          Email: test2@tuna.uy
+          Name: Test User
+          ID: tuna_123s4
+          Document: 919.412.410-85
+          DocumentType: CPF
+          Gender: M
+          DaysSinceRegistration: 5
+          DaysSinceLastLogin: 2
+          DaysSinceLastPasswordChange: null
+          DaysSinceLastPurchase: 2
+          DaysSinceFirstPurchase: 2
+        Vendor:
+          MCC: '5947'
+          Code: EC-123
+          Industry: Gift shop
+          Name: ACME
+          Document: 38.788.507/0001-24
+          DocumentType: CNPJ
+          DaysSinceRegistration: 300
+          DaysSinceLastSell: 20
+          DaysSinceFirstSell: 300
+        PaymentItems:
+          Items:
+            - Amount: 200
+              ProductDescription: item1
+              ItemQuantity: 1
+              CategoryName: Category name
+              Ean: A-121321
+              AntiFraud:
+                DeliveryAddressee: Antonia
+                IsEmailConfirmed: true
+                IsPhoneNumberConfirmed: false
+                customerSince: 61
+                Data:
+                  CustomField1: AnyValue
+                  CustomObject1:
+                    name: value
+        PaymentData:
+          PaymentMethods:
+            - PaymentMethodType: '1'
+              Amount: 200
+              Installments: 1
+              SoftDescriptor: ACME
+              CardInfo:
+                CardNumber: null
+                CardHolderName: Tuna Test User
+                BrandName: Master
+                ExpirationMonth: null
+                ExpirationYear: null
+                Token: 11e02526-e82c-4ac1-b509-fa459b205bfd
+                TokenProvider: Tuna
+                TokenSingleUse: 0
+                SaveCard: false
+                BillingInfo:
+                  Document: 919.412.410-85
+                  DocumentType: CPF
+                  Address:
+                    Street: Ses Av. Das Nações
+                    Number: Q811
+                    Complement: Bloco G
+                    Neighborhood: Brasilia
+                    City: Brasilia
+                    State: DF
+                    Country: BR
+                    PostalCode: 70429-900
+                    Phone: (61) 324 421 21
+          Countrycode: BR
+          AntiFraud:
+            DeliveryAddressee: Antonia
+          DeliveryAddress:
+            Street: Ses Av. Das Nações
+            Number: Q811
+            Complement: Bloco H
+            Neighborhood: Brasilia
+            City: Brasilia
+            State: DF
+            Country: BR
+            PostalCode: 70429-900
+            Phone: (61) 324 421 21
+        FrontData:
+          Sessions:
+            - Key: Sift
+              Value: SessionID1
+            - Key: Cybersource
+              Value: SessionID2
+            - Key: Clearsale
+              Value: SessionID3
+          Origin: WEBSITE
+          IpAddress: 192.168.0.5
+          CookiesAccepted: true
+    InitRequestDummyCapturedCreditCard:
+      summary: Dummy Captured (Credit Card)
+      value: &ref_11
+        tokenSession: >-
+          Tqra0uZACXDPFRYlvWExU++QIjhQBnQTSNbvFY6/uLLn31fjqVT6y5jeEwpMzQT/vR6xXxz1AGkDMBj1dtsCfESDolhTolMr+VZNIPO7CsM=
+        partnerUniqueId: '#000.001'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Captured
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyAuthorizedCreditCard:
+      summary: Dummy Authorized (Credit Card)
+      value: &ref_12
+        tokenSession: >-
+          simwJAhEDDL8JFOHRxVG1L9mlR1cCY5AMRt8H3tljoXu7PWbmrJdiial06uz5+h2W1U/xH76FcCQfwzkpYNincMfpytGMNAguNQfnFYbzPY=
+        partnerUniqueId: '#000.002'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Authorized
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyNotAuthorizedCreditCard:
+      summary: Dummy Not Authorized (Credit Card)
+      value: &ref_13
+        tokenSession: >-
+          c5R+cieEV7gAtwEwGtKKWmLSSll2BeF6/KFolUuleWHMmadJGCPfnlkEeubPKpZKJdrHirTU6aEZSuktajCy2e6KMXO0SQBjtMd39fDpCZk=
+        partnerUniqueId: '#000.003'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Not Authorized
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyErrorCreditCard:
+      summary: Dummy Error (Credit Card)
+      value: &ref_14
+        tokenSession: >-
+          kC8DA7Baewh9XYENA4Rb8ScaqwA0//sp+sEFC8raqQLVbYkNJxVBJhdVQdBull6PfIyL4HLsBmosprXR878TOLHDZg1wCZbnij4sq4T4SDQ=
+        partnerUniqueId: '#000.004'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Error
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyInvalidCreditCard:
+      summary: Dummy Invalid (Credit Card)
+      value: &ref_15
+        tokenSession: >-
+          TazOmXfOHBY0WWHvcz5jxPH2+np6fLQu6wJHTXyMlMGd4ueDxoDtpCfNHhPMTe+4e8ojqjDAWphPrJhp/6bFnuG1Bq8tiZcEbimsDNq55Kk=
+        partnerUniqueId: '#000.005'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Invalid
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyPendingCreditCard:
+      summary: Dummy Pending (Credit Card)
+      value: &ref_16
+        tokenSession: >-
+          JrrJ8OM9u/N0DMOIm+jcEOaTu77BAIKUWE89Fy5CPUXyjYocnRm3KJNkdh2jgqhItT3dorx65hec0oikiwfNb8VvgblnwpuHFZVUO1eohC0=
+        partnerUniqueId: '#000.006'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Pending
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitRequestDummyExpiredCreditCard:
+      summary: Dummy Expired (Credit Card)
+      value: &ref_17
+        tokenSession: >-
+          mTul1oZ/k9oxrrcifu/SJTvZcDRkQmuv9QpCwGGOGlXY0v6FQrGyNSdhARQuqbsI6n53UZ/RbfuCOeD9/9lR1vAqrU8GDOP3js4IuZJgD0E=
+        partnerUniqueId: '#000.007'
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+          document: 744.479.870-23
+          documentType: CPF
+          name: Maju Cheapetta
+        paymentItems:
+          items:
+            - amount: 20
+              detailUniqueId: A01
+              productDescription: Test product
+              itemQuantity: 1
+        paymentData:
+          paymentMethods:
+            - paymentMethodType: '1'
+              amount: 20
+              installments: 1
+              cardInfo:
+                token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+                tokenProvider: Tuna
+                cardHolderName: Expired
+                expirationMonth: 12
+                expirationYear: 2023
+                brandName: Visa
+                tokenSingleUse: 0
+                saveCard: false
+                billingInfo:
+                  document: 744.479.870-23
+                  documentType: CPF
+          deliveryAddress:
+            street: Rua João Longo
+            number: '1004'
+            neighborhood: Jandira
+            city: São Paulo
+            state: SP
+            postalCode: 06608-420
+            phone: (11) 6536-8864
+            country: BR
+          countryCode: BR
+    InitResponseTemplate:
+      summary: Example Template
+      value: &ref_19
+        status: char
+        methods:
+          - methodType: char
+            status: char
+            methodId: int16
+            operationId: string
+            methodKey: string
+            message:
+              source: int32
+              code: string
+              message: string
+              info: string
+            redirectInfo:
+              url: string
+            pixInfo:
+              qRContent: string
+              qrCopyPaste: string
+              qRImage: string
+            cryptoInfo:
+              coinValue: string
+              coinRateCurrency: string
+              coinAddr: string
+              coinQRCodeUrl: string
+              coin: string
+        paymentKey: string
+        partnerUniqueId: string
+        code: int32
+        message:
+          source: int32
+          code: string
+          message: string
+          info: string
+        operationId: string
+    InitResponsePaymentPix:
+      summary: Payment (Pix)
+      value: &ref_20
+        status: P
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            pixInfo:
+              qrImage: https://dev.tuna.uy/img/tuna-qr.png
+              qrCopyPaste: 00020101021126580014br.gov.bcb.pix01363b1b2736-c55a-4d5c-a5bc-69bcc15dab6352040000530398654042.005802BR5915Tuna Pagamentos6009SAO PAULO62250521ee652caf166921386384363049479
+              qrContent: >-
+                00020101021126580014br.gov.bcb.pix01363b1b2736-c55a-4d5c-a5bc-69bcc15dab6352040000530398654042.005802BR5915Tuna Pagamentos6009SAO PAULO62250521ee652caf166921386384363049479
+            methodType: D
+            status: C
+            methodId: 0
+            operationId: O000113489AA00000D1300
+            methodKey: 13489AA00000BCA00
+        paymentKey: 13489AA00000BCA
+        partnerUniqueId: '#032'
+        code: 1
+        operationId: O000113489AA00000D13
+    InitResponsePaymentBoleto:
+      summary: Payment (Boleto)
+      value: &ref_21
+        status: P
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            redirectInfo:
+              url: >-
+                https://sicadi.com.br/mhouse/boleto/boleto3.php?numero_banco=341-7&local_pagamento=PAG%C1VEL+EM+QUALQUER+BANCO+AT%C9+O+VENCIMENTO&cedente=Tuna&data_documento=30%2F3%2F2022&numero_documento=DF+00113&especie=&aceite=N&data_processamento=30%2F3%2F2022&uso_banco=&carteira=179&especie_moeda=Real&quantidade=&valor=&vencimento=19%2F4%2F2022&agencia=0049&codigo_cedente=10201-5&meunumero=00010435&valor_documento=20%2C0&instrucoes=Taxa+de+visita+de+suporte%0D%0AAp%F3s+o+vencimento+R%24+0%2C80+ao+dia&mensagem1=&mensagem2=&mensagem3=ATEN%C7%C3O%3A+N%C3O+RECEBER+AP%D3S+15+DIAS+DO+VENCIMENTO&sacado=&Submit=Enviar
+            methodType: '3'
+            status: C
+            methodId: 0
+            operationId: O000113489AA00000D1100
+            methodKey: 13489AA00000BC800
+        paymentKey: 13489AA00000BC8
+        partnerUniqueId: '#030'
+        code: 1
+        operationId: O000113489AA00000D11
+    InitResponsePaymentCrypto:
+      summary: Payment (Crypto)
+      value: &ref_22
+        status: P
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            cryptoInfo:
+              coinValue: '0.00009072'
+              coinRateCurrency: 220,467.67
+              coinAddr: 1PLm8XMtKPESvxVCXz2aeQnVP14JEdG5v
+              coinQRCodeUrl: >-
+                https://services.bancryp.com/payment/qrcode?coin=BTC&address=1PLm8XMtKPESvxVCXz2aeQnVP14JEdG5v&amount=0.00009072&quote=31767&id=31767&theme=light
+              coin: BTC
+            methodType: E
+            status: C
+            methodId: 0
+            operationId: O000213489AA0001623900
+            methodKey: 13489AA000128E000
+        paymentKey: 13489AA000128E0
+        partnerUniqueId: '#035'
+        code: 1
+        operationId: O000213489AA00016239
+    InitResponsePaymentSplit:
+      summary: Split Payment
+      value: &ref_23
+        status: '2'
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '2'
+            methodId: 0
+            operationId: O000113489AA00000D1600
+            methodKey: 13489AA00000BCD00
+        paymentKey: 13489AA00000BCD
+        partnerUniqueId: '#040'
+        code: 1
+        operationId: O000113489AA00000D16
+    InitResponseDummyCapturedCreditCard:
+      summary: Dummy Captured (Credit Card)
+      value: &ref_24
+        status: '2'
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '2'
+            methodId: 0
+            operationId: O000113489A900000D0900
+            methodKey: 13489A900000BC000
+        paymentKey: 13489A900000BC0
+        partnerUniqueId: '#000.001'
+        code: 1
+        operationId: O000113489A900000D09
+    InitResponseDummyAuthorizedCreditCard:
+      summary: Dummy Authorized (Credit Card)
+      value: &ref_25
+        status: P
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '1'
+            methodId: 0
+            operationId: O000113489A900000D0A00
+            methodKey: 13489A900000BC100
+        paymentKey: 13489A900000BC1
+        partnerUniqueId: '#000.002'
+        code: 1
+        operationId: O000113489A900000D0A
+    InitResponseDummyNotAuthorizedCreditCard:
+      summary: Dummy Not Authorized (Credit Card)
+      value: &ref_26
+        status: '4'
+        methods:
+          - message:
+              source: 3
+              code: GwNotAuthorized
+              message: >-
+                The transaction was not approved and your card was not charged.
+                Please contact your issuing bank or try using a different card.
+            methodType: '1'
+            status: '4'
+            methodId: 0
+            operationId: O000113489A900000D0B00
+            methodKey: 13489A900000BC200
+        paymentKey: 13489A900000BC2
+        partnerUniqueId: '#000.003'
+        code: 1
+        operationId: O000113489A900000D0B
+    InitResponseDummyErrorCreditCard:
+      summary: Dummy Error (Credit Card)
+      value: &ref_27
+        status: '4'
+        methods:
+          - message:
+              source: 3
+              code: GwErrorTransaction
+              message: Gateway request error while processing transaction :O
+            methodType: '1'
+            status: A
+            methodId: 0
+            operationId: O000113489A900000D0C00
+            methodKey: 13489A900000BC300
+        paymentKey: 13489A900000BC3
+        partnerUniqueId: '#000.004'
+        code: 1
+        operationId: O000113489A900000D0C
+    InitResponseDummyInvalidCreditCard:
+      summary: Dummy Invalid (Credit Card)
+      value: &ref_28
+        status: '4'
+        methods:
+          - message:
+              source: 3
+              code: GwErrorCard
+              message: 'Gateway: Card data is invalid.'
+            methodType: '1'
+            status: A
+            methodId: 0
+            operationId: O000113489A900000D0D00
+            methodKey: 13489A900000BC400
+        paymentKey: 13489A900000BC4
+        partnerUniqueId: '#000.005'
+        code: 1
+        operationId: O000113489A900000D0D
+    InitResponseDummyPendingCreditCard:
+      summary: Dummy Pending (Credit Card)
+      value: &ref_29
+        status: P
+        methods:
+          - message:
+              source: 3
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: C
+            methodId: 0
+            operationId: O000113489A900000D0E00
+            methodKey: 13489A900000BC500
+        paymentKey: 13489A900000BC5
+        partnerUniqueId: '#000.006'
+        code: 1
+        operationId: O000113489A900000D0E
+    InitResponseDummyExpiredCreditCard:
+      summary: Dummy Expired (Credit Card)
+      value: &ref_30
+        status: '4'
+        methods:
+          - message:
+              source: 3
+              code: GwInvalidCardData
+              message: 'Gateway: Card data is invalid.'
+            methodType: '1'
+            status: '6'
+            methodId: 0
+            operationId: O000113489A900000D0F00
+            methodKey: 13489A900000BC600
+        paymentKey: 13489A900000BC6
+        partnerUniqueId: '#000.007'
+        code: 1
+        operationId: O000113489A900000D0F
+    CancelRequestTemplate:
+      summary: Example Template
+      value: &ref_32
+        cardsDetail:
+          - amount: double
+            methodId: int16
+            Splits:
+              - MerchantID: string
+                Amount: double
+        paymentKey: string
+        partnerUniqueID: string
+        paymentDate: date-time        
+    CancelRequestPaymentKey:
+      summary: Cancel just with PaymentKey
+      value: &ref_33
+        paymentKey: 13489A600000BA7
+    CancelRequestPartnerUniqueId:
+      summary: Cancel with PartnerUniqueId and Payment Date
+      value: &ref_34
+        partnerUniqueID: '#0002'
+        paymentDate: '2022-03-26'
+    CancelRequestPartial:
+      summary: Partial Amount Cancelation
+      value: &ref_35
+        cardsDetail:
+          - amount: 5
+            methodId: 0
+        paymentKey: 13489A600000BA9
+    CancelRequestBoleto:
+      summary: Boleto Cancelation
+      value: &ref_78
+        cardsDetail:
+          - amount: 5
+            methodId: 0
+        paymentKey: 13489A600000BA9
+        PixInfo:
+          PixKeyType: "CPF"
+          PixKey: "01234567890"
+          Document: "98765432100"
+          DocumentType: "CPF"
+    CancelRequestPartialSplit:
+      summary: Partial Amount Cancelation
+      value: &ref_77
+        cardsDetail:
+          - amount: 300.50
+            methodId: 0
+            Splits:
+              - MerchantID: "12345"
+                Amount: 100.50
+              - MerchantID: "67890"
+                Amount: 200.00
+        paymentKey: 13489A600000BA0        
+    CancelResponseTemplate:
+      summary: Example Template
+      value: &ref_37
+        status: char
+        methods:
+          - methodType: char
+            status: char
+            methodId: int16
+            operationId: string
+            message:
+              source: int32
+              code: string
+              message: string
+              info: string
+        code: int32
+        message:
+          source: int32
+          code: string
+          message: string
+          info: string
+        operationId: string
+    CancelResponsePaymentKey:
+      summary: Cancel just with PaymentKey
+      value: &ref_38
+        status: '3'
+        methods:
+          - message:
+              source: 1
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '3'
+            methodId: 0
+            operationId: O000113489A600000CEF00
+        code: 1
+        message:
+          source: 1
+          code: Done
+          message: Operation terminated
+        operationId: O000113489A600000CEF
+    CancelResponsePartnerUniqueId:
+      summary: Cancel with PartnerUniqueId and Payment Date
+      value: &ref_39
+        status: '3'
+        methods:
+          - message:
+              source: 1
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '3'
+            methodId: 0
+            operationId: O000113489A600000CF000
+        code: 1
+        message:
+          source: 1
+          code: Done
+          message: Operation terminated
+        operationId: O000113489A600000CF0
+    CancelItemRequestTemplate:
+      summary: Example Template
+      value: &ref_41
+        itemsDetail:
+          - itemQuantity: int16
+            detailUniqueID: string
+        paymentKey: string
+        partnerUniqueID: string
+        paymentDate: date-time
+    CancelItemRequestPaymentKey:
+      summary: CancelItem with PaymentKey
+      value: &ref_42
+        paymentKey: 13489AA00000BD4
+        itemsDetail:
+          - itemQuantity: 1
+            detailUniqueId: A01
+    CancelItemRequestPartnerUniqueId:
+      summary: CancelItem with PartnerUniqueId and PaymentDate
+      value: &ref_43
+        partnerUniqueId: '#046'
+        paymentDate: '2022-03-30'
+        itemsDetail:
+          - itemQuantity: 1
+            detailUniqueId: A01
+    CancelItemResponseTemplate:
+      summary: Example Template
+      value: &ref_45
+        status: char
+        methods:
+          - status: char
+            partnerUniqueId: string
+            methodType: char
+            methodId: int16
+            operationId: string
+            message:
+              source: int32
+              code: string
+              message: string
+              info: string
+        code: int32
+        message:
+          source: int32
+          code: string
+          message: string
+          info: string
+        operationId: string
+    CancelItemResponsePaymentKey:
+      summary: CancelItem with PaymentKey
+      value: &ref_46
+        status: '3'
+        methods:
+          - message:
+              source: 1
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '3'
+            methodId: 0
+            partnerUniqueId: '#045'
+            operationId: O000113489AA00000D1E00
+        code: 1
+        message:
+          source: 1
+          code: Done
+          message: Operation terminated
+        operationId: O000113489AA00000D1E
+    CancelItemResponsePartnerUniqueId:
+      summary: CancelItem with PartnerUniqueId and Payment Date
+      value: &ref_47
+        status: '3'
+        methods:
+          - message:
+              source: 1
+              code: GwResultOk
+              message: Successfull authorization
+            methodType: '1'
+            status: '3'
+            methodId: 0
+            partnerUniqueId: '#046'
+            operationId: O000113489AA00000D2000
+        code: 1
+        message:
+          source: 1
+          code: Done
+          message: Operation terminated
+        operationId: O000113489AA00000D20
+    CaptureRequestTemplate:
+      summary: Example Template
+      value: &ref_49
+        amount: double
+        cardsDetail:
+          - amount: double
+            methodId: int16
+        paymentKey: string
+        partnerUniqueID: string
+        paymentDate: date-time
+    StatusRequestTemplate:
+      summary: Example Template
+      value: &ref_51
+        paymentKey: string
+    StatusRequestCancelled:
+      summary: Cancelled
+      value: &ref_52
+        paymentKey: 13465AD0000052C
+    StatusRequestPartialRefunded:
+      summary: Partial Refunded
+      value: &ref_53
+        paymentKey: 13465AD0000052C
+    StatusResponseTemplate:
+      summary: Example Template
+      value: &ref_55
+        status: char
+        statusDescription: string
+        methods:
+          - statusDescription: string
+            methodType: char
+            status: char
+            methodId: int16
+        code: string
+    StatusResponseCancelled:
+      summary: Cancelled
+      value: &ref_56
+        status: '5'
+        statusDescription: Cancelled
+        methods:
+          - statusDescription: Cancelled
+            methodType: '1'
+            status: '5'
+            methodId: 0
+        code: 1
+    StatusResponsePartialRefunded:
+      summary: Partial Refunded
+      value: &ref_57
+        status: '9'
+        statusDescription: PartialRefunded
+        methods:
+          - statusDescription: PartialRefunded
+            methodType: '1'
+            status: '9'
+            methodId: 0
+        code: 1
+    CreatePaymentLinkResponseTemplate:
+      summary: Example Template
+      value: &ref_75
+        paymentLink:
+          partnerId: 2
+          partnerAccountId: 2
+          serviceId: 44
+          externalPaymentId: f2bd1744-966b-4adc-a656-a412debc31f0
+          processingStatus: D
+          paymentDate: '2022-12-28T00:00:00'
+          paymentId: 109680
+          detail:
+            paymentKey: 1348D2C0001AC70
+            paymentExternalRedirectType: U
+            paymentExternalRedirectSessionID: j/CEdAm7HCH4xNgTPzx/6yweAjgTJS6P9YiswrsUiC3gMxFbeCm++EE/hcxycWfxlA349eKIErKV2p6WlAd6G6UWkCzCo5idx9m/eyEv861YEy1o/pj+0Gg7MY4/ko3v2h2p
+            maxInstallments: 3
+            customerId: tuna-07e9f391-cfba-499d-b589-885c59520dcb
+            paymentId: 109680
+            amount: 1
+            customer:
+              id: tuna-07e9f391-cfba-499d-b589-885c59520dcb
+            deliveryAddress: {}
+          redirectionGuid: 5e64c89d-07ac-46bc-81a3-cb49edee3fc4
+          expirationTimestamp: '2022-12-28T19:33:15'
+          description: Teste Paul
+          status: Active
+          creationDate: '2022-12-28T19:03:14.709382'
+          url: https://checkout.tunagateway.com?rid=5e64c89d-07ac-46bc-81a3-cb49edee3fc4&pid=2&sid=44
+          partnerUniqueId: '999152'
+        code: 1
+    ResponseCreatePaymentLink:
+      summary: Link Created
+      value: &ref_72
+        description: Teste Paul
+        amount: '1.00'
+        expirationinminutes: 30
+        partnerUniqueId: "abc-123"
+        type: U
+        MaxInstallments: 3
+    ResponseCreateLink:
+      summary: Created
+      value: &ref_73
+        description: Teste Paul
+        amount: '1.00'
+        expirationinminutes: 1
+        partnerUniqueId: "{{partneruniqueid}}"
+        UrlSuccessReturn: https://www.example.com/success
+        UrlPendingReturn: https://www.example.com/pending
+        UrlFailReturn: https://www.example.com/failed
+        UrlExpiredReturn: https://www.example.com/continue-order
+        ExpiredPaymentInfo: This link has expired, please click the button below to return
+          to our website.
+        ExpiredPaymentButtonLabel: Voltar ao site
+        LogoURL: https://your.cdn/images/312471923469133blob
+        StoreName: Fui Na Padaria
+        MainColor: red
+        split:
+          externalID: 6058ee01419d150022d07918
+        customer:
+          name: 'paul ascher '
+          phone: '59898331262'
+          birthday:
+          document_type: cpf
+          document: '08714597799'
+          merchant_id: ''
+        items:
+        - detailUniqueID: ABDEF
+          sku: '132456'
+          ean: '980709870987'
+          amount: '1.00'
+          productID: '12'
+          productDescription: Pão de Queijo
+          itemQuantity: '1'
+        deliveryaddress:
+          state: RJ
+          city: Rio de Janeiro
+          neighborhood: Lagoa
+          street: Rua Professor Abelardo Lobo
+          number: '14'
+          complement: '502'
+          postal_code: '22470240'
+        type: U
+        MaxInstallments: 3
+      StatusResponseCancelled:
+        summary: Cancelled
+        value: &ref_56
+          status: '5'
+          statusDescription: Cancelled
+          methods:
+            - statusDescription: Cancelled
+              methodType: '1'
+              status: '5'
+              methodId: 0
+          code: 1
+security:
+  - Account: []
+    AppToken: []
+paths:
+  /api/Payment/Init:
+    post:
+      summary: Init
+      description: >
+        The initial step's to create and perform the payment. The request body
+
+        contains information regarding the purchase details and the payment
+
+        method employed. For each payment method, there is a minimum set of
+
+        required data. Please, refer to the examples on the right to get the
+
+        meaningful ones for your company.
+
+
+        Check out how to perform a [Payment
+        Integration](/api/payment-integration)
+
+        with our [Payment API](/api/payment) and [Token API](/api/token).
+      operationId: Init
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_0
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_1
+              Pix:
+                summary: Payment (Pix)
+                value: *ref_2
+              Boleto:
+                summary: Payment (Boleto)
+                value: *ref_3
+              Crypto:
+                summary: Payment (Crypto)
+                value: *ref_4
+              Split:
+                summary: Split Payment
+                value: *ref_5
+              Antifraud:
+                summary: Credit Card Payment with Antifraud
+                value: *ref_6
+              GiftCard:
+                summary: Gift Card Payment
+                value: *ref_7
+              ExternalPaypal:
+                summary: External Payment (PayPal)
+                value: *ref_8
+              GooglePay:
+                summary: Credit Card Payment with Google Pay
+                value: *ref_9
+              MultipleSessionIds:
+                summary: Multiple SessionIds
+                value: *ref_10
+              DummyCapturedCreditCard:
+                summary: Dummy Captured (Credit Card)
+                value: *ref_11
+              DummyAuthorizedCreditCard:
+                summary: Dummy Authorized (Credit Card)
+                value: *ref_12
+              DummyNotAuthorizedCreditCard:
+                summary: Dummy Not Authorized (Credit Card)
+                value: *ref_13
+              DummyErrorCreditCard:
+                summary: Dummy Error (Credit Card)
+                value: *ref_14
+              DummyInvalidCreditCard:
+                summary: Dummy Invalid (Credit Card)
+                value: *ref_15
+              DummyPendingCreditCard:
+                summary: Dummy Pending (Credit Card)
+                value: *ref_16
+              DummyExpiredCreditCard:
+                summary: Dummy Expired (Credit Card)
+                value: *ref_17
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_18
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_19
+                Pix:
+                  summary: Payment (Pix)
+                  value: *ref_20
+                Boleto:
+                  summary: Payment (Boleto)
+                  value: *ref_21
+                Crypto:
+                  summary: Payment (Crypto)
+                  value: *ref_22
+                Split:
+                  summary: Split Payment
+                  value: *ref_23
+                DummyCapturedCreditCard:
+                  summary: Dummy Captured (Credit Card)
+                  value: *ref_24
+                DummyAuthorizedCreditCard:
+                  summary: Dummy Authorized (Credit Card)
+                  value: *ref_25
+                DummyNotAuthorizedCreditCard:
+                  summary: Dummy Not Authorized (Credit Card)
+                  value: *ref_26
+                DummyErrorCreditCard:
+                  summary: Dummy Error (Credit Card)
+                  value: *ref_27
+                DummyInvalidCreditCard:
+                  summary: Dummy Invalid (Credit Card)
+                  value: *ref_28
+                DummyPendingCreditCard:
+                  summary: Dummy Pending (Credit Card)
+                  value: *ref_29
+                DummyExpiredCreditCard:
+                  summary: Dummy Expired (Credit Card)
+                  value: *ref_30
+  /api/Payment/Cancel:
+    post:
+      summary: Cancel
+      description: |
+        Operation to refund payment.
+      operationId: Cancel
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_31
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_32
+              PaymentKey:
+                summary: Cancel just with PaymentKey
+                value: *ref_33
+              PartnerUniqueId:
+                summary: Cancel with PartnerUniqueId and Payment Date
+                value: *ref_34
+              Partial:
+                summary: Partial Amount Cancelation
+                value: *ref_35
+              PartialSplit:
+                summary: Partial Amount Cancelation (Split)
+                value: *ref_77
+              Boleto:
+                summary: Cancel Boleto
+                value: *ref_78
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_36
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_37
+                PaymentKey:
+                  summary: Cancel just with PaymentKey
+                  value: *ref_38
+                PartnerUniqueId:
+                  summary: Cancel with PartnerUniqueId and Payment Date
+                  value: *ref_39
+                Partial:
+                  summary: Partial Amount Cancelation
+                  value: *ref_35
+  /api/Payment/CancelItem:
+    post:
+      summary: CancelItem
+      description: |
+        Operation to refund payment by items.
+      operationId: CancelItem
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_40
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_41
+              PaymentKey:
+                summary: CancelItem with PaymentKey
+                value: *ref_42
+              PartnerUniqueId:
+                summary: CancelItem with PartnerUniqueId and PaymentDate
+                value: *ref_43
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_44
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_45
+                PaymentKey:
+                  summary: CancelItem with PaymentKey
+                  value: *ref_46
+                PartnerUniqueId:
+                  summary: CancelItem with PartnerUniqueId and Payment Date
+                  value: *ref_47
+  /api/Payment/Capture:
+    post:
+      summary: Capture
+      description: >
+        In case your account is configured to delay capture, use this method to
+        capture a
+
+        previously authorized transaction.
+      operationId: Capture
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_48
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_49
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_36
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_37
+  /api/Payment/AdvancedCapture:
+    post:
+      summary: AdvancedCapture
+      description: >
+        Advanced capture.
+      operationId: AdvancedCapture
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_48
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_49
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_36
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_37
+  /api/Payment/Status:
+    post:
+      summary: Status
+      description: |
+        Retrieve the status of a transaction.
+
+        If all callbacks are implemented
+        properly, and uptime is ensured, then the payment status between client
+        applications and the payment gateway should be synchronized. However,
+        should all callbacks (such as to notify the client application when a
+        transation has been cancelled using the web console) not be implemented,
+        it is possible for the statuses to be different. In that case, this API
+        call will retrieve the current status.
+      operationId: Status
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_50
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_51
+              Cancelled:
+                summary: Cancelled
+                value: *ref_52
+              PartialRefunded:
+                summary: Partial Refunded
+                value: *ref_53
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_54
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_55
+                SCancelledample:
+                  summary: Cancelled
+                  value: *ref_56
+                PartialRefunded:
+                  summary: Partial Refunded
+                  value: *ref_57
+  /api/PaymentLink/Create:
+    post:
+      summary: Create Payment Link
+      description: |
+        Creates a new Payment Link.
+
+        This will create a Payment Link you can direct your users to.
+        It's possible to configure whether to restrict payment methods
+        or not, the maximum number of installments for credit card
+        transactions.
+      operationId: Create Payment Link
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_70
+            examples:
+              Minimum:
+                summary: Mininum payload
+                value: *ref_72
+              All options:
+                summary: All possible fields
+                value: *ref_73
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_74
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_75
