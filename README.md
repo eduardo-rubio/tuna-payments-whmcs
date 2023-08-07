@@ -1,4 +1,4 @@
-#  Tuna Payment Gateway Module #
+#  Tuna Payment Gateway Module for WHMCS #
 
 ## Summary ##
 
