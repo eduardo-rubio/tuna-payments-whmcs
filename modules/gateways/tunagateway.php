@@ -29,6 +29,9 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
+$tunagateway_Description = "Tuna";
+$tunagateway_Version = "1.0.0";
+
 /**
  * Define module related meta data.
  *
