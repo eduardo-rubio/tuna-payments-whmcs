@@ -11,7 +11,7 @@
  * Within the module itself, all functions must be prefixed with the module
  * filename, followed by an underscore, and then the function name. For this
  * example file, the filename is "gatewaymodule" and therefore all functions
- * begin "gatewaymodule_".
+ * begin "tunagateway_".
  *
  * If your module or third party API does not support a given function, you
  * should not define that function within your module. Only the _config
@@ -39,11 +39,14 @@ if (!defined("WHMCS")) {
  *
  * @return array
  */
-function gatewaymodule_MetaData()
+function tunagateway_MetaData()
 {
     return array(
-        'DisplayName' => 'Sample Payment Gateway Module',
+        'DisplayName' => 'Tuna Payment Gateway Module',
         'APIVersion' => '1.1', // Use API Version 1.1
+        'failedEmail' => 'Credit Card Payment Failed',
+        'successEmail' => 'Custom Credit Card Payment Template', // You can utilise custom templates here
+        'pendingEmail' => 'Custom Credit Card Pending Template',
         'DisableLocalCreditCardInput' => true,
         'TokenisedStorage' => false,
     );
@@ -69,14 +72,14 @@ function gatewaymodule_MetaData()
  *
  * @return array
  */
-function gatewaymodule_config()
+function tunagateway_config()
 {
     return array(
         // the friendly display name for a payment gateway should be
         // defined here for backwards compatibility
         'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Sample Third Party Payment Gateway Module',
+            'Value' => 'Tuna Payment Gateway Module',
         ),
         // a text field type allows for single line text input
         'accountID' => array(
@@ -143,7 +146,7 @@ function gatewaymodule_config()
  *
  * @return string
  */
-function gatewaymodule_link($params)
+function tunagateway_link($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
@@ -222,7 +225,7 @@ function gatewaymodule_link($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_refund($params)
+function tunagateway_refund($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
@@ -284,7 +287,7 @@ function gatewaymodule_refund($params)
  *
  * @return array Transaction response status
  */
-function gatewaymodule_cancelSubscription($params)
+function tunagateway_cancelSubscription($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
