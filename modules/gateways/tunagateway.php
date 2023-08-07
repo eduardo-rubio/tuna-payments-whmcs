@@ -44,6 +44,8 @@ $tunagateway_Version = "1.0.0";
  */
 function tunagateway_MetaData()
 {
+    global $tunagateway_Description;
+
     return array(
         'DisplayName' => 'Tuna Payment Gateway Module',
         'APIVersion' => '1.1', // Use API Version 1.1
@@ -77,6 +79,8 @@ function tunagateway_MetaData()
  */
 function tunagateway_config()
 {
+    global $tunagateway_Description, $tunagateway_Version;
+
     return array(
         // the friendly display name for a payment gateway should be
         // defined here for backwards compatibility
@@ -84,57 +88,67 @@ function tunagateway_config()
             'Type' => 'System',
             'Value' => 'Tuna Payment Gateway Module',
         ),
-        // a text field type allows for single line text input
-        'accountID' => array(
-            'FriendlyName' => 'Account ID',
+        // "x-tuna-account": "demo"
+        'tunaAccount' => array(
+            'FriendlyName' => 'Tuna Account',
             'Type' => 'text',
             'Size' => '25',
             'Default' => '',
-            'Description' => 'Enter your account ID here',
+            'Description' => 'Enter your Tuna Account here',
         ),
-        // a password field type allows for masked text input
-        'secretKey' => array(
-            'FriendlyName' => 'Secret Key',
-            'Type' => 'password',
-            'Size' => '25',
+        // "x-tuna-apptoken": "a3823a59-66bb-49e2-95eb-b47c447ec7a7"
+        'tunaApptoken' => array(
+            'FriendlyName' => 'Tuna App Token',
+            'Type' => 'text',
+            'Size' => '36',
             'Default' => '',
-            'Description' => 'Enter secret key here',
+            'Description' => 'Enter Tuna App Token here',
         ),
-        // the yesno field type displays a single checkbox option
+        // Test Environment
         'testMode' => array(
-            'FriendlyName' => 'Test Mode',
+            'FriendlyName' => 'Test Environment',
             'Type' => 'yesno',
-            'Description' => 'Tick to enable test mode',
+            'Description' => 'Tick to enable test environment',
         ),
-        // the dropdown field type renders a select menu of options
-        'dropdownField' => array(
-            'FriendlyName' => 'Dropdown Field',
-            'Type' => 'dropdown',
-            'Options' => array(
-                'option1' => 'Display Value 1',
-                'option2' => 'Second Option',
-                'option3' => 'Another Option',
-            ),
-            'Description' => 'Choose one',
-        ),
-        // the radio field type displays a series of radio button options
-        'radioField' => array(
-            'FriendlyName' => 'Radio Field',
-            'Type' => 'radio',
-            'Options' => 'First Option,Second Option,Third Option',
-            'Description' => 'Choose your option!',
-        ),
-        // the textarea field type allows for multi-line text input
-        'textareaField' => array(
-            'FriendlyName' => 'Textarea Field',
-            'Type' => 'textarea',
-            'Rows' => '3',
-            'Cols' => '60',
-            'Description' => 'Freeform multi-line text input field',
-        ),
+
     );
 }
 
+function tunagateway_token($params)
+{
+     // Gateway Configuration Parameters
+     $tunaAccount = $params['tunaAccount'];
+     $tunaApptoken = $params['tunaApptoken'];
+     $testMode = $params['testMode'];
+ 
+    $tokenUrl = 'https://token.tunagateway.com/api/Token/Generate';
+
+    if ($testMode=='yes') {
+        $tokenUrl = 'https://token.tuna-demo.uy/api/Token/Generate';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+    $ch = curl_init($tokenUrl);
+
+    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
+        'accept:application/json',
+        'x-tuna-account:'+$tunaAccount,
+        'x-tuna-apptoken:'+$tunaApptoken,
+        'Content-Type:application/json'));
+
+    $errno=200;
+
+    $data = curl_exec($ch);
+    if (curl_error()) {
+        $errno = curl_errno();
+    }
+    curl_close($ch);
+
+    return array(
+
+    );
+
+}
 /**
  * Payment link.
  *
@@ -152,12 +166,9 @@ function tunagateway_config()
 function tunagateway_link($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
     $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
 
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
@@ -186,7 +197,13 @@ function tunagateway_link($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    $url = 'https://www.demopaymentgateway.com/do.payment';
+    $paymentUrl = 'https://engine.tunagateway.com/api/PaymentInit';   
+
+    if ($testMode=='yes') {
+        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/PaymentInit';   
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
 
     $postfields = array();
     $postfields['username'] = $username;
@@ -207,7 +224,7 @@ function tunagateway_link($params)
     $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
     $postfields['return_url'] = $returnUrl;
 
-    $htmlOutput = '<form method="post" action="' . $url . '">';
+    $htmlOutput = '<form method="post" action="' . $paymentUrl . '">';
     foreach ($postfields as $k => $v) {
         $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
     }
@@ -231,12 +248,9 @@ function tunagateway_link($params)
 function tunagateway_refund($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
     $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
 
     // Transaction Parameters
     $transactionIdToRefund = $params['transid'];
@@ -293,12 +307,9 @@ function tunagateway_refund($params)
 function tunagateway_cancelSubscription($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
     $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
 
     // Subscription Parameters
     $subscriptionIdToCancel = $params['subscriptionID'];
