@@ -1,29 +1,9 @@
 <?php
 /**
- * WHMCS Sample Payment Gateway Module
- *
- * Payment Gateway modules allow you to integrate payment solutions with the
- * WHMCS platform.
- *
- * This sample file demonstrates how a payment gateway module for WHMCS should
- * be structured and all supported functionality it can contain.
- *
- * Within the module itself, all functions must be prefixed with the module
- * filename, followed by an underscore, and then the function name. For this
- * example file, the filename is "gatewaymodule" and therefore all functions
- * begin "tunagateway_".
- *
- * If your module or third party API does not support a given function, you
- * should not define that function within your module. Only the _config
- * function is required.
- *
- * For more information, please refer to the online documentation.
- *
- * @see https://developers.whmcs.com/payment-gateways/
- *
- * @copyright Copyright (c) WHMCS Limited 2017
- * @license http://www.whmcs.com/license/ WHMCS Eula
+ * WHMCS Tuna Payment Gateway Module
  */
+
+require_once __DIR__ . '/tunagateway/tunagatewayhelper.php';
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -64,16 +44,6 @@ function tunagateway_MetaData()
  * presented to administrator users when activating and configuring your
  * payment gateway module for use.
  *
- * Supported field types include:
- * * text
- * * password
- * * yesno
- * * dropdown
- * * radio
- * * textarea
- *
- * Examples of each field type and their possible configuration parameters are
- * provided in the sample function below.
  *
  * @return array
  */
@@ -114,41 +84,6 @@ function tunagateway_config()
     );
 }
 
-function tunagateway_token($params)
-{
-     // Gateway Configuration Parameters
-     $tunaAccount = $params['tunaAccount'];
-     $tunaApptoken = $params['tunaApptoken'];
-     $testMode = $params['testMode'];
- 
-    $tokenUrl = 'https://token.tunagateway.com/api/Token/Generate';
-
-    if ($testMode=='yes') {
-        $tokenUrl = 'https://token.tuna-demo.uy/api/Token/Generate';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
-    }
-    $ch = curl_init($tokenUrl);
-
-    curl_setopt($ch, CURLOPT_HTTPHEADER, array(
-        'accept:application/json',
-        'x-tuna-account:'+$tunaAccount,
-        'x-tuna-apptoken:'+$tunaApptoken,
-        'Content-Type:application/json'));
-
-    $errno=200;
-
-    $data = curl_exec($ch);
-    if (curl_error()) {
-        $errno = curl_errno();
-    }
-    curl_close($ch);
-
-    return array(
-
-    );
-
-}
 /**
  * Payment link.
  *
@@ -177,6 +112,7 @@ function tunagateway_link($params)
     $currencyCode = $params['currency'];
 
     // Client Parameters
+    $userid = $params['clientdetails']['userid'];
     $firstname = $params['clientdetails']['firstname'];
     $lastname = $params['clientdetails']['lastname'];
     $email = $params['clientdetails']['email'];
@@ -187,6 +123,7 @@ function tunagateway_link($params)
     $postcode = $params['clientdetails']['postcode'];
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
+    $taxId = $params['clientdetails']['taxId'];
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -197,16 +134,89 @@ function tunagateway_link($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    $paymentUrl = 'https://engine.tunagateway.com/api/PaymentInit';   
+    $paymentUrl = 'https://engine.tunagateway.com/api/PaymentInit';
 
-    if ($testMode=='yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/PaymentInit';   
+    if ($testMode == 'yes') {
+        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/PaymentInit';
         $tunaAccount = 'demo';
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
+    try {
+        $sessionData = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    } catch (Exception $e) {
+        return "<h4> Invalid Session </h4>";
+    };
+
+    $sessionId = $sessionData['sessionId'];
+
+    $partnerUniqueId = $invoiceId;
+    $customer= array(
+      "id"=>$userid,
+      "email"=>$email,
+      "document"=>$taxId,
+      "documentType"=>"TAXID",
+      "name"=>$firstname + " " + $lastname
+    );
+
+    $paymentItems = array (
+      "items"=> array (
+          "amount"=>$amount,
+          "detailUniqueId"=>$invoiceId,
+          "productDescription"=>$description,
+          "itemQuantity"=>1
+      )
+    );
+
+    $deliveryAddress= array (
+        "street"=>$address1,
+        "number"=>$address2,
+        "neighborhood"=>$city,
+        "city"=>$city,
+        "state"=>$state,
+        "postalCode"=>$postcode,
+        "phone"=>$phone,
+        "country"=>$country
+    );
+    
+    $countryCode=$country;
+
+    /*
+    "paymentData": {
+      "paymentMethods": [
+        {
+          "paymentMethodType": "1",
+          "amount": 20,
+          "installments": 1,
+          "cardInfo": {
+            "token": "ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30",
+            "tokenProvider": "Tuna",
+            "cardHolderName": "Captured",
+            "expirationMonth": 12,
+            "expirationYear": 2023,
+            "brandName": "Visa",
+            "tokenSingleUse": 0,
+            "saveCard": false,
+            "billingInfo": {
+              "document": "744.479.870-23",
+              "documentType": "CPF"
+            }
+          }
+        }
+      ],
+    */
+
+    $card = array(
+        "cardHolderName" => "Captured",
+        "cardNumber" => "4111111111111111",
+        "expirationMonth" => 12,
+        "expirationYear" => 2023,
+        "cvv" => "222",
+        "singleUse" => false,
+    );
+
     $postfields = array();
-    $postfields['username'] = $username;
+    $postfields['username'] = $firstname+" "+$lastname;
     $postfields['invoice_id'] = $invoiceId;
     $postfields['description'] = $description;
     $postfields['amount'] = $amount;
