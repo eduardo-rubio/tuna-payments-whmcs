@@ -32,8 +32,8 @@ function tunagateway_MetaData()
         'failedEmail' => 'Credit Card Payment Failed',
         'successEmail' => 'Custom Credit Card Payment Template', // You can utilise custom templates here
         'pendingEmail' => 'Custom Credit Card Pending Template',
-        'DisableLocalCreditCardInput' => true,
-        'TokenisedStorage' => false,
+        'DisableLocalCreditCardInput' => false,
+        'TokenisedStorage' => true,
     );
 }
 
@@ -84,7 +84,7 @@ function tunagateway_config()
     );
 }
 
-function merchantgateway_3dsecure($params)
+function tunagateway_3dsecure($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
@@ -119,6 +119,7 @@ function merchantgateway_3dsecure($params)
     $postcode = $params['clientdetails']['postcode'];
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
+    $fullname = $params['clientdetails']['fullname'];
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -172,19 +173,14 @@ function merchantgateway_3dsecure($params)
  *
  * @param array $params Payment Gateway Module Parameters
  *
- * @see https://developers.whmcs.com/payment-gateways/merchant-gateway/
- *
  * @return array Transaction response status
  */
-function merchantgateway_capture($params)
+function tunagateway_capture($params)
 {
     // Gateway Configuration Parameters
     $accountId = $params['accountID'];
     $secretKey = $params['secretKey'];
     $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
 
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
@@ -211,6 +207,9 @@ function merchantgateway_capture($params)
     $postcode = $params['clientdetails']['postcode'];
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
+    $taxid = $params['clientdetails']['taxid'];
+    $userid = $params['clientdetails']['id'];
+    $fullname = $params['clientdetails']['fullname'];
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -221,28 +220,112 @@ function merchantgateway_capture($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
+    $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
+
+    if ($testMode == 'yes') {
+        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Init';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+
+    try {
+        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    } catch (Exception $e) {
+        return "<h4> Invalid Session </h4>";
+    };
+
+    $expirationMonth=substr($cardExpiry, 0, 2); 
+    $expirationYear="20"+ substr($cardExpiry, 3, 2);
+
+    try {
+        $cardToken = tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
+    } catch (Exception $e) {
+        return "<h4> Invalid Session </h4>";
+    };
+
+    $partnerUniqueId = $invoiceId;
+    $customer= array(
+      "id"=>$userid,
+      "email"=>$email,
+      "document"=>$taxid,
+      "documentType"=>"TAXID",
+      "name"=>$fullname
+    );
+
+    $paymentItems = array (
+      "items"=> array (
+          "amount"=>$amount,
+          "detailUniqueId"=>$invoiceId,
+          "productDescription"=>$description,
+          "itemQuantity"=>1
+      )
+    );
+
+    $deliveryAddress= array (
+        "street"=>$address1,
+        "number"=>$address2,
+        "neighborhood"=>$city,
+        "city"=>$city,
+        "state"=>$state,
+        "postalCode"=>$postcode,
+        "phone"=>$phone,
+        "country"=>$country
+    );
+    
+    $countryCode=$country;
+
+    $paymentData = array (
+      "paymentMethods"=> array (
+          "paymentMethodType"=>1,
+          "amount"=>$amount,
+          "installments"=>1,
+          "cardInfo"=> array (
+            "token"=> $cardToken,
+            "tokenProvider"=>"Tuna",
+            "cardHolderName"=>$fullname,
+            "expirationMonth"=>$expirationMonth,
+            "expirationYear"=> $expirationYear,
+            "brandName"=> $cardType,
+            "tokenSingleUse"=> 0,
+            "saveCard"=> false,
+            "billingInfo"=> array (
+              "document"=> "744.479.870-23",
+              "documentType"=>"CPF"
+            )
+          )
+        )
+    );
+
+    $card = array(
+        "cardHolderName" => $fullname,
+        "cardNumber" => $cardIssueNumber,
+        "expirationMonth" => $expirationMonth,
+        "expirationYear" => $expirationYear,
+        "cvv" => $cardCvv,
+        "singleUse" => true,
+    );
+
+    $postHeader = array(
+        "accept" => "application/json",
+        "x-tuna-account" => $tunaAccount,
+        "x-tuna-apptoken" => $tunaApptoken,
+        "Content-Type" => "application/json",
+    );
 
     $postfields = [
-        'invoiceid' => $params['invoiceid'],
-        'amount' => $params['amount'],
-        'currency' => $params['currency'],
-        'cardnumber' => $params['cardnum'],
-        'cardexpiry' => $params['cardexp'],
-        'cardcvv' => $params['cccvv'],
-        'card_holder_name' => $params['clientdetails']['firstname']
-            . ' - ' . $params['clientdetails']['lastname'],
-        'card_address' => [
-            'address_line_1' => $params['clientdetails']['address1'],
-            'city' => $params['clientdetails']['city'],
-            'state' => $params['clientdetails']['state'],
-            'postcode' => $params['clientdetails']['postcode'],
-            'country' => $params['clientdetails']['country'],
-        ],
+        'tokenSession' => $sessionId,
+        'partnerUniqueId' => $partnerUniqueId,
+        'customer' => $customer,
+        'paymentItems' => $paymentItems,
+        'paymentData' => $paymentData,
+        'deliveryAddress' => $deliveryAddress,
+        'countryCode'=> $countryCode
     ];
 
     $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/capture');
+    curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);
@@ -252,16 +335,14 @@ function merchantgateway_capture($params)
 
     // perform API call to capture payment and interpret result
 
-    if ($responseData->status == 1) {
+    if ($data->status == 1) {
         $returnData = [
             // 'success' if successful, otherwise 'declined', 'error' for failure
             'status' => 'success',
             // Data to be recorded in the gateway log - can be a string or array
-            'rawdata' => $responseData,
+            'rawdata' => $data,
             // Unique Transaction ID for the capture transaction
-            'transid' => $transactionId,
-            // Optional fee amount for the fee value refunded
-            'fee' => $feeAmount,
+            'transid' => $data->operationId,
         ];
     } else {
         $returnData = [
@@ -270,14 +351,14 @@ function merchantgateway_capture($params)
             // When not successful, a specific decline reason can be logged in the Transaction History
             'declinereason' => 'Credit card declined. Please contact issuer.',
             // Data to be recorded in the gateway log - can be a string or array
-            'rawdata' => $responseData,
+            'rawdata' => $data,
         ];
     }
 
     return $returnData;
 }
 
-function yourmodulename_storeremote($params) {
+function tunagateway_storeremote($params) {
     $action = $params['action'];
     $gatewayid = $params['gatewayid'];
     $cardtype = $params['cardtype'];
@@ -352,165 +433,6 @@ function yourmodulename_storeremote($params) {
             break;
     }
 }
-/**
- * Payment link.
- *
- * Required by third party payment gateway modules only.
- *
- * Defines the HTML output displayed on an invoice. Typically consists of an
- * HTML form that will take the user to the payment gateway endpoint.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/third-party-gateway/
- *
- * @return string
- */
-function tunagateway_link($params)
-{
-    // Gateway Configuration Parameters
-    $tunaAccount = $params['tunaAccount'];
-    $tunaApptoken = $params['tunaApptoken'];
-    $testMode = $params['testMode'];
-
-    // Invoice Parameters
-    $invoiceId = $params['invoiceid'];
-    $description = $params["description"];
-    $amount = $params['amount'];
-    $currencyCode = $params['currency'];
-
-    // Client Parameters
-    $userid = $params['clientdetails']['userid'];
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
-    $taxId = $params['clientdetails']['taxId'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $returnUrl = $params['returnurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    $paymentUrl = 'https://engine.tunagateway.com/api/PaymentInit';
-
-    if ($testMode == 'yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/PaymentInit';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
-    }
-
-    try {
-        $sessionData = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
-    } catch (Exception $e) {
-        return "<h4> Invalid Session </h4>";
-    };
-
-    $sessionId = $sessionData['sessionId'];
-
-    $partnerUniqueId = $invoiceId;
-    $customer= array(
-      "id"=>$userid,
-      "email"=>$email,
-      "document"=>$taxId,
-      "documentType"=>"TAXID",
-      "name"=>$firstname + " " + $lastname
-    );
-
-    $paymentItems = array (
-      "items"=> array (
-          "amount"=>$amount,
-          "detailUniqueId"=>$invoiceId,
-          "productDescription"=>$description,
-          "itemQuantity"=>1
-      )
-    );
-
-    $deliveryAddress= array (
-        "street"=>$address1,
-        "number"=>$address2,
-        "neighborhood"=>$city,
-        "city"=>$city,
-        "state"=>$state,
-        "postalCode"=>$postcode,
-        "phone"=>$phone,
-        "country"=>$country
-    );
-    
-    $countryCode=$country;
-
-    /*
-    "paymentData": {
-      "paymentMethods": [
-        {
-          "paymentMethodType": "1",
-          "amount": 20,
-          "installments": 1,
-          "cardInfo": {
-            "token": "ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30",
-            "tokenProvider": "Tuna",
-            "cardHolderName": "Captured",
-            "expirationMonth": 12,
-            "expirationYear": 2023,
-            "brandName": "Visa",
-            "tokenSingleUse": 0,
-            "saveCard": false,
-            "billingInfo": {
-              "document": "744.479.870-23",
-              "documentType": "CPF"
-            }
-          }
-        }
-      ],
-    */
-
-    $card = array(
-        "cardHolderName" => "Captured",
-        "cardNumber" => "4111111111111111",
-        "expirationMonth" => 12,
-        "expirationYear" => 2023,
-        "cvv" => "222",
-        "singleUse" => false,
-    );
-
-    $postfields = array();
-    $postfields['username'] = $firstname+" "+$lastname;
-    $postfields['invoice_id'] = $invoiceId;
-    $postfields['description'] = $description;
-    $postfields['amount'] = $amount;
-    $postfields['currency'] = $currencyCode;
-    $postfields['first_name'] = $firstname;
-    $postfields['last_name'] = $lastname;
-    $postfields['email'] = $email;
-    $postfields['address1'] = $address1;
-    $postfields['address2'] = $address2;
-    $postfields['city'] = $city;
-    $postfields['state'] = $state;
-    $postfields['postcode'] = $postcode;
-    $postfields['country'] = $country;
-    $postfields['phone'] = $phone;
-    $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
-    $postfields['return_url'] = $returnUrl;
-
-    $htmlOutput = '<form method="post" action="' . $paymentUrl . '">';
-    foreach ($postfields as $k => $v) {
-        $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
-    }
-    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
-    $htmlOutput .= '</form>';
-
-    return $htmlOutput;
-}
 
 /**
  * Refund transaction.
@@ -555,58 +477,54 @@ function tunagateway_refund($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
+    $cancelUrl = 'https://engine.tunagateway.com/api/Payment/Cancel';
+
+    if ($testMode == 'yes') {
+        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Cancel';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+
+    $postHeader = array(
+        "accept" => "application/json",
+        "x-tuna-account" => $tunaAccount,
+        "x-tuna-apptoken" => $tunaApptoken,
+        "Content-Type" => "application/json",
+    );
+
+    $postfields = [
+        'tokenSession' => $sessionId,
+        'partnerUniqueId' => $partnerUniqueId,
+        'customer' => $customer,
+        'paymentItems' => $paymentItems,
+        'paymentData' => $paymentData,
+        'deliveryAddress' => $deliveryAddress,
+        'countryCode'=> $countryCode
+    ];
+
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $cancelUrl);
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response);
+
+
+
     // perform API call to initiate refund and interpret result
 
     return array(
         // 'success' if successful, otherwise 'declined', 'error' for failure
         'status' => 'success',
         // Data to be recorded in the gateway log - can be a string or array
-        'rawdata' => $responseData,
+        'rawdata' => $data,
         // Unique Transaction ID for the refund transaction
-        'transid' => $refundTransactionId,
-        // Optional fee amount for the fee value refunded
-        'fees' => $feeAmount,
+        'transid' => $transactionIdToRefund,
     );
 }
 
-/**
- * Cancel subscription.
- *
- * If the payment gateway creates subscriptions and stores the subscription
- * ID in tblhosting.subscriptionid, this function is called upon cancellation
- * or request by an admin user.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/subscription-management/
- *
- * @return array Transaction response status
- */
-function tunagateway_cancelSubscription($params)
-{
-    // Gateway Configuration Parameters
-    $tunaAccount = $params['tunaAccount'];
-    $tunaApptoken = $params['tunaApptoken'];
-    $testMode = $params['testMode'];
-
-    // Subscription Parameters
-    $subscriptionIdToCancel = $params['subscriptionID'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // perform API call to cancel subscription and interpret result
-
-    return array(
-        // 'success' if successful, any other value for failure
-        'status' => 'success',
-        // Data to be recorded in the gateway log - can be a string or array
-        'rawdata' => $responseData,
-    );
-
-}
