@@ -84,6 +84,274 @@ function tunagateway_config()
     );
 }
 
+function merchantgateway_3dsecure($params)
+{
+    // Gateway Configuration Parameters
+    $accountId = $params['accountID'];
+    $secretKey = $params['secretKey'];
+    $testMode = $params['testMode'];
+    $dropdownField = $params['dropdownField'];
+    $radioField = $params['radioField'];
+    $textareaField = $params['textareaField'];
+
+    // Invoice Parameters
+    $invoiceId = $params['invoiceid'];
+    $description = $params["description"];
+    $amount = $params['amount'];
+    $currencyCode = $params['currency'];
+
+    // Credit Card Parameters
+    $cardType = $params['cardtype'];
+    $cardNumber = $params['cardnum'];
+    $cardExpiry = $params['cardexp'];
+    $cardStart = $params['cardstart'];
+    $cardIssueNumber = $params['cardissuenum'];
+    $cardCvv = $params['cccvv'];
+
+    // Client Parameters
+    $firstname = $params['clientdetails']['firstname'];
+    $lastname = $params['clientdetails']['lastname'];
+    $email = $params['clientdetails']['email'];
+    $address1 = $params['clientdetails']['address1'];
+    $address2 = $params['clientdetails']['address2'];
+    $city = $params['clientdetails']['city'];
+    $state = $params['clientdetails']['state'];
+    $postcode = $params['clientdetails']['postcode'];
+    $country = $params['clientdetails']['country'];
+    $phone = $params['clientdetails']['phonenumber'];
+
+    // System Parameters
+    $companyName = $params['companyname'];
+    $systemUrl = $params['systemurl'];
+    $returnUrl = $params['returnurl'];
+    $langPayNow = $params['langpaynow'];
+    $moduleDisplayName = $params['name'];
+    $moduleName = $params['paymentmethod'];
+    $whmcsVersion = $params['whmcsVersion'];
+
+    // Return HTML form for redirecting user to 3D Auth.
+
+    $url = 'https://www.demopaymentgateway.com/do.3dauth';
+
+    $postfields = array(
+        'account_id' => $accountId,
+        'invoice_id' => $invoiceId,
+        'amount' => $amount,
+        'currency' => $currencyCode,
+        'card_type' => $cardType,
+        'card_number' => $cardNumber,
+        'card_expiry_month' => substr($cardExpiry, 0, 2),
+        'card_expiry_year' => substr($cardExpiry, 2, 2),
+        'card_cvv' => $cardCvv,
+        'card_holder_name' => $firstname . ' ' . $lastname,
+        'card_holder_address' => $address1,
+        'card_holder_city' => $city,
+        'card_holder_state' => $state,
+        'card_holder_zip' => $postcode,
+        'card_holder_country' => $country,
+        'return_url' => $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php',
+    );
+
+    $htmlOutput = '<form method="post" action="' . $url . '">';
+    foreach ($postfields as $k => $v) {
+        $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
+    }
+    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
+    $htmlOutput .= '</form>';
+
+    return $htmlOutput;
+}
+
+/**
+ * Capture payment.
+ *
+ * Called when a payment is to be processed and captured.
+ *
+ * The card cvv number will only be present for the initial card holder present
+ * transactions. Automated recurring capture attempts will not provide it.
+ *
+ * @param array $params Payment Gateway Module Parameters
+ *
+ * @see https://developers.whmcs.com/payment-gateways/merchant-gateway/
+ *
+ * @return array Transaction response status
+ */
+function merchantgateway_capture($params)
+{
+    // Gateway Configuration Parameters
+    $accountId = $params['accountID'];
+    $secretKey = $params['secretKey'];
+    $testMode = $params['testMode'];
+    $dropdownField = $params['dropdownField'];
+    $radioField = $params['radioField'];
+    $textareaField = $params['textareaField'];
+
+    // Invoice Parameters
+    $invoiceId = $params['invoiceid'];
+    $description = $params["description"];
+    $amount = $params['amount'];
+    $currencyCode = $params['currency'];
+
+    // Credit Card Parameters
+    $cardType = $params['cardtype'];
+    $cardNumber = $params['cardnum'];
+    $cardExpiry = $params['cardexp'];
+    $cardStart = $params['cardstart'];
+    $cardIssueNumber = $params['cardissuenum'];
+    $cardCvv = $params['cccvv'];
+
+    // Client Parameters
+    $firstname = $params['clientdetails']['firstname'];
+    $lastname = $params['clientdetails']['lastname'];
+    $email = $params['clientdetails']['email'];
+    $address1 = $params['clientdetails']['address1'];
+    $address2 = $params['clientdetails']['address2'];
+    $city = $params['clientdetails']['city'];
+    $state = $params['clientdetails']['state'];
+    $postcode = $params['clientdetails']['postcode'];
+    $country = $params['clientdetails']['country'];
+    $phone = $params['clientdetails']['phonenumber'];
+
+    // System Parameters
+    $companyName = $params['companyname'];
+    $systemUrl = $params['systemurl'];
+    $returnUrl = $params['returnurl'];
+    $langPayNow = $params['langpaynow'];
+    $moduleDisplayName = $params['name'];
+    $moduleName = $params['paymentmethod'];
+    $whmcsVersion = $params['whmcsVersion'];
+
+
+    $postfields = [
+        'invoiceid' => $params['invoiceid'],
+        'amount' => $params['amount'],
+        'currency' => $params['currency'],
+        'cardnumber' => $params['cardnum'],
+        'cardexpiry' => $params['cardexp'],
+        'cardcvv' => $params['cccvv'],
+        'card_holder_name' => $params['clientdetails']['firstname']
+            . ' - ' . $params['clientdetails']['lastname'],
+        'card_address' => [
+            'address_line_1' => $params['clientdetails']['address1'],
+            'city' => $params['clientdetails']['city'],
+            'state' => $params['clientdetails']['state'],
+            'postcode' => $params['clientdetails']['postcode'],
+            'country' => $params['clientdetails']['country'],
+        ],
+    ];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/capture');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    $response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($response);
+
+    // perform API call to capture payment and interpret result
+
+    if ($responseData->status == 1) {
+        $returnData = [
+            // 'success' if successful, otherwise 'declined', 'error' for failure
+            'status' => 'success',
+            // Data to be recorded in the gateway log - can be a string or array
+            'rawdata' => $responseData,
+            // Unique Transaction ID for the capture transaction
+            'transid' => $transactionId,
+            // Optional fee amount for the fee value refunded
+            'fee' => $feeAmount,
+        ];
+    } else {
+        $returnData = [
+            // 'success' if successful, otherwise 'declined', 'error' for failure
+            'status' => 'declined',
+            // When not successful, a specific decline reason can be logged in the Transaction History
+            'declinereason' => 'Credit card declined. Please contact issuer.',
+            // Data to be recorded in the gateway log - can be a string or array
+            'rawdata' => $responseData,
+        ];
+    }
+
+    return $returnData;
+}
+
+function yourmodulename_storeremote($params) {
+    $action = $params['action'];
+    $gatewayid = $params['gatewayid'];
+    $cardtype = $params['cardtype'];
+    $cardnum = $params['cardnum'];
+    $cardexp = $params['cardexp'];
+    $cardstart = $params['cardstart'];
+    $cardissuenum = $params['cardissuenum'];
+
+    switch ($action) {
+        case 'create':
+            // Make API call to create a token here
+            $postfields = [
+                'cardnumber' => $cardnum,
+                'cardexpiry' => $cardexp,
+                'cardcvv' => $params['cccvv'],
+            ];
+        
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/store');
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $response = curl_exec($ch);
+            curl_close($ch);
+        
+            $data = json_decode($response);
+
+            return [
+                'status' => 'success',
+                'gatewayid' => $data->remote_id,
+            ];
+            break;
+        case 'update':
+            // Make API call to update a token here
+            $postfields = [
+                'remote_id' => $gatewayid,
+                'cardexpiry' => $cardexp,
+            ];
+        
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/update');
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $response = curl_exec($ch);
+            curl_close($ch);
+        
+            $data = json_decode($response);
+            return [
+                'status' => 'success',
+                'gatewayid' => $data->remote_id,
+            ];
+            break;
+        case 'delete':
+            // Make API call to delete a token here
+            $postfields = [
+                'remote_id' => $gatewayid,
+            ];
+        
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
+            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            $response = curl_exec($ch);
+            curl_close($ch);
+        
+            $data = json_decode($response);
+            return [
+                'status' => 'success',
+            ];
+            break;
+    }
+}
 /**
  * Payment link.
  *
@@ -340,4 +608,5 @@ function tunagateway_cancelSubscription($params)
         // Data to be recorded in the gateway log - can be a string or array
         'rawdata' => $responseData,
     );
+
 }
