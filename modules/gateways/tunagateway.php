@@ -84,85 +84,6 @@ function tunagateway_config()
     );
 }
 
-function tunagateway_3dsecure($params)
-{
-    // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
-
-    // Invoice Parameters
-    $invoiceId = $params['invoiceid'];
-    $description = $params["description"];
-    $amount = $params['amount'];
-    $currencyCode = $params['currency'];
-
-    // Credit Card Parameters
-    $cardType = $params['cardtype'];
-    $cardNumber = $params['cardnum'];
-    $cardExpiry = $params['cardexp'];
-    $cardStart = $params['cardstart'];
-    $cardIssueNumber = $params['cardissuenum'];
-    $cardCvv = $params['cccvv'];
-
-    // Client Parameters
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
-    $fullname = $params['clientdetails']['fullname'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $returnUrl = $params['returnurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // Return HTML form for redirecting user to 3D Auth.
-
-    $url = 'https://www.demopaymentgateway.com/do.3dauth';
-
-    $postfields = array(
-        'account_id' => $accountId,
-        'invoice_id' => $invoiceId,
-        'amount' => $amount,
-        'currency' => $currencyCode,
-        'card_type' => $cardType,
-        'card_number' => $cardNumber,
-        'card_expiry_month' => substr($cardExpiry, 0, 2),
-        'card_expiry_year' => substr($cardExpiry, 2, 2),
-        'card_cvv' => $cardCvv,
-        'card_holder_name' => $firstname . ' ' . $lastname,
-        'card_holder_address' => $address1,
-        'card_holder_city' => $city,
-        'card_holder_state' => $state,
-        'card_holder_zip' => $postcode,
-        'card_holder_country' => $country,
-        'return_url' => $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php',
-    );
-
-    $htmlOutput = '<form method="post" action="' . $url . '">';
-    foreach ($postfields as $k => $v) {
-        $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
-    }
-    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
-    $htmlOutput .= '</form>';
-
-    return $htmlOutput;
-}
-
 /**
  * Capture payment.
  *
@@ -208,7 +129,7 @@ function tunagateway_capture($params)
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
-    $userid = $params['clientdetails']['id'];
+    $userid = $params['clientdetails']['clientid'];
     $fullname = $params['clientdetails']['fullname'];
 
     // System Parameters
@@ -220,6 +141,12 @@ function tunagateway_capture($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
+    try {
+        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    } catch (Exception $e) {
+        return "<h4> Invalid Session </h4>";
+    };
+
     $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
 
     if ($testMode == 'yes') {
@@ -228,11 +155,6 @@ function tunagateway_capture($params)
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
-    try {
-        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
-    } catch (Exception $e) {
-        return "<h4> Invalid Session </h4>";
-    };
 
     $expirationMonth=substr($cardExpiry, 0, 2); 
     $expirationYear="20"+ substr($cardExpiry, 3, 2);
@@ -367,6 +289,12 @@ function tunagateway_storeremote($params) {
     $cardstart = $params['cardstart'];
     $cardissuenum = $params['cardissuenum'];
 
+    try {
+        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    } catch (Exception $e) {
+        return "<h4> Invalid Session </h4>";
+    };
+
     switch ($action) {
         case 'create':
             // Make API call to create a token here
@@ -453,6 +381,7 @@ function tunagateway_refund($params)
     $testMode = $params['testMode'];
 
     // Transaction Parameters
+    $invoiceId = $params['invoiceid'];
     $transactionIdToRefund = $params['transid'];
     $refundAmount = $params['amount'];
     $currencyCode = $params['currency'];
@@ -492,14 +421,20 @@ function tunagateway_refund($params)
         "Content-Type" => "application/json",
     );
 
+    $cardDetail = array (
+        "amount"=>$refundAmount,
+        "methodId"=>0,
+        "Splits"=> array (
+            "MerchantID"=>"",
+            "Amount"=>$refundAmount
+        )
+    );
+
     $postfields = [
-        'tokenSession' => $sessionId,
+        'cardDetail' => $cardDetail,
+        'paymentKey' => '',
         'partnerUniqueId' => $partnerUniqueId,
-        'customer' => $customer,
-        'paymentItems' => $paymentItems,
-        'paymentData' => $paymentData,
-        'deliveryAddress' => $deliveryAddress,
-        'countryCode'=> $countryCode
+        'paymentDay' => ''
     ];
 
 

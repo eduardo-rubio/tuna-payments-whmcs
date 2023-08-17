@@ -1,26 +1,24 @@
 {
-    "name": "whmcs/sample-gateway-module",
-    "description": "Sample Third Party Payment Gateway Module for the WHMCS Billing Automation Platform",
+    "name": "eduardo-rubio/whmcs",
+    "description": "Tuna Payment Gateway Module for the WHMCS Billing Automation Platform",
     "keywords": [
         "whmcs",
         "web host automation platform",
-        "third party gateway module",
+        "merchant gateway module",
         "gateway module",
-        "third party gateway"
+        "merchant gateway"
     ],
-    "homepage": "http://www.whmcs.com/",
+    "homepage": "https:\/\/dev.tuna.uy", 
     "license": "MIT",
     "authors": [
         {
-            "name": "WHMCS Development Team",
-            "email": "development@whmcs.com",
-            "homepage": "http://www.whmcs.com/",
+            "name": "Edu Rubio",
+            "email": "edurubio0810@gmail.com",
+            "homepage": "https:\/\/github.com\/eduardo-rubio",
             "role": "Developer"
         }
     ],
     "support": {
-        "email": "support@whmcs.com",
-        "forum": "http://forums.whmcs.com/",
-        "wiki": "http://docs.whmcs.com/"
+        "forum": "https:\/\/dev.tuna.uy" 
     }
 }

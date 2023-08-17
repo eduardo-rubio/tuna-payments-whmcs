@@ -5,13 +5,29 @@ require_once __DIR__ . '/../../../init.php';
 require_once __DIR__ . '/../../../includes/gatewayfunctions.php';
 require_once __DIR__ . '/../../../includes/invoicefunctions.php';
 
+// Detect module name from filename.
+$gatewayModuleName = basename(__FILE__, '.php');
+
+// Fetch gateway configuration parameters.
+$gatewayParams = getGatewayVariables($gatewayModuleName);
+
 // Die if module is not active.
 if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 
+$global_id=0;
+$global_email="";
+$global_sessionId = 0;
+
 function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email)
 {
+    global $global_sessionId, $global_id, $global_email;
+
+    if ($global_id==$id && $global_email==$email && $global_sessionId!=0) {
+        return $global_sessionId;
+    }
+
     $tokenUrl = 'https://token.tunagateway.com/api/Token/NewSession';
 
     if ($testMode == 'yes') {
@@ -49,7 +65,11 @@ function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
     curl_close($ch);
 
-    return $data['sessionId'];
+    $global_id=$id;
+    $global_email=$email;
+    $global_sessionId=$data['sessionId'];
+
+    return $global_sessionId;
 }
 
 function tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $cardHolderName, $cardNumber,
