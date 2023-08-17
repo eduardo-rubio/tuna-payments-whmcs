@@ -1,6 +1,11 @@
 {
     "name": "eduardo-rubio/tuna-merchant-whmcs",
     "description": "Tuna Payment Gateway Module for the WHMCS Billing Automation Platform",
+    "type": "whmcs-gateways",
+    "version": "1.0.0",
+    "require": {
+        "composer/installers": "^1.10"
+    },
     "keywords": [
         "whmcs",
         "web host automation platform",
@@ -20,5 +25,10 @@
     ],
     "support": {
         "forum": "https:\/\/dev.tuna.uy" 
+    },
+    "config": {
+        "allow-plugins": {
+            "composer/installers": true
+        }
     }
 }

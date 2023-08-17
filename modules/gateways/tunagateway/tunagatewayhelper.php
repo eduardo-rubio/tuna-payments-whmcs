@@ -16,15 +16,15 @@ if (!$gatewayParams['type']) {
     die("Module Not Activated");
 }
 
-$global_id=0;
-$global_email="";
+$global_id = 0;
+$global_email = "";
 $global_sessionId = 0;
 
 function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email)
 {
     global $global_sessionId, $global_id, $global_email;
 
-    if ($global_id==$id && $global_email==$email && $global_sessionId!=0) {
+    if ($global_id == $id && $global_email == $email && $global_sessionId != 0) {
         return $global_sessionId;
     }
 
@@ -65,15 +65,17 @@ function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
     curl_close($ch);
 
-    $global_id=$id;
-    $global_email=$email;
-    $global_sessionId=$data['sessionId'];
+    $global_id = $id;
+    $global_email = $email;
+    $global_sessionId = $data['sessionId'];
 
     return $global_sessionId;
 }
 
 function tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $cardHolderName, $cardNumber,
     $expirationMonth, $expirationYear, $cvv, $singleUse) {
+
+        
     $tokenUrl = 'https://token.tunagateway.com/api/Token/Generate';
 
     if ($testMode == 'yes') {
@@ -90,15 +92,16 @@ function tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     );
 
     $card = array(
-        "cardHolderName" => $cardHolderName,
         "cardNumber" => $cardNumber,
+        "cardHolderName" => $cardHolderName,
         "expirationMonth" => $expirationMonth,
         "expirationYear" => $expirationYear,
         "singleUse" => $singleUse,
+        "cVV" => $cvv,
     );
     $postParameter = array(
-        "sessionId" => $sessionId,
         "card" => $card,
+        "sessionId" => $sessionId,
     );
 
     $ch = curl_init($tokenUrl);
@@ -108,11 +111,21 @@ function tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $errno = 200;
 
+    $response = [];
     $data = curl_exec($ch);
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
+        $response = [
+            'success' => false,
+        ];
+
+    } else {
+        $response = [
+            'success' => true,
+            'token' => $data['token'],
+        ];
     }
     curl_close($ch);
 
-    return $data['token'];
+    return $response;
 }

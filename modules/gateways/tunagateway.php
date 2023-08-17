@@ -99,8 +99,8 @@ function tunagateway_config()
 function tunagateway_capture($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
     $testMode = $params['testMode'];
 
     // Invoice Parameters
@@ -110,6 +110,8 @@ function tunagateway_capture($params)
     $currencyCode = $params['currency'];
 
     // Credit Card Parameters
+    $remoteGatewayToken = $params['gatewayid'];
+
     $cardType = $params['cardtype'];
     $cardNumber = $params['cardnum'];
     $cardExpiry = $params['cardexp'];
@@ -147,6 +149,28 @@ function tunagateway_capture($params)
         return "<h4> Invalid Session </h4>";
     };
 
+    if (!$remoteGatewayToken) {
+        // If there is no token yet, it indicates this capture is being
+        // attempted using an existing locally stored card. Create a new
+        // token and then attempt capture.
+
+        $expirationMonth = substr($cardExpiry, 0, 2);
+        $expirationYear = "20"+substr($cardExpiry, 2, 2);
+
+            $response = tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
+            if ($response['success']) {
+                $remoteGatewayToken = $response['token'];
+            } else {
+                return [
+                    // 'success' if successful, otherwise 'error' for failure
+                    'status' => 'error',
+                    // Data to be recorded in the gateway log - can be a string or array
+                    'rawdata' => $response,
+                ];
+            }
+    
+    };
+
     $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
 
     if ($testMode == 'yes') {
@@ -156,66 +180,57 @@ function tunagateway_capture($params)
     }
 
 
-    $expirationMonth=substr($cardExpiry, 0, 2); 
-    $expirationYear="20"+ substr($cardExpiry, 3, 2);
-
-    try {
-        $cardToken = tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
-    } catch (Exception $e) {
-        return "<h4> Invalid Session </h4>";
-    };
-
     $partnerUniqueId = $invoiceId;
-    $customer= array(
-      "id"=>$userid,
-      "email"=>$email,
-      "document"=>$taxid,
-      "documentType"=>"TAXID",
-      "name"=>$fullname
+    $customer = array(
+        "id" => $userid,
+        "email" => $email,
+        "document" => $taxid,
+        "documentType" => "TAXID",
+        "name" => $fullname,
     );
 
-    $paymentItems = array (
-      "items"=> array (
-          "amount"=>$amount,
-          "detailUniqueId"=>$invoiceId,
-          "productDescription"=>$description,
-          "itemQuantity"=>1
-      )
+    $paymentItems = array(
+        "items" => array(
+            "amount" => $amount,
+            "detailUniqueId" => $invoiceId,
+            "productDescription" => $description,
+            "itemQuantity" => 1,
+        ),
     );
 
-    $deliveryAddress= array (
-        "street"=>$address1,
-        "number"=>$address2,
-        "neighborhood"=>$city,
-        "city"=>$city,
-        "state"=>$state,
-        "postalCode"=>$postcode,
-        "phone"=>$phone,
-        "country"=>$country
+    $deliveryAddress = array(
+        "street" => $address1,
+        "number" => $address2,
+        "neighborhood" => $city,
+        "city" => $city,
+        "state" => $state,
+        "postalCode" => $postcode,
+        "phone" => $phone,
+        "country" => $country,
     );
-    
-    $countryCode=$country;
 
-    $paymentData = array (
-      "paymentMethods"=> array (
-          "paymentMethodType"=>1,
-          "amount"=>$amount,
-          "installments"=>1,
-          "cardInfo"=> array (
-            "token"=> $cardToken,
-            "tokenProvider"=>"Tuna",
-            "cardHolderName"=>$fullname,
-            "expirationMonth"=>$expirationMonth,
-            "expirationYear"=> $expirationYear,
-            "brandName"=> $cardType,
-            "tokenSingleUse"=> 0,
-            "saveCard"=> false,
-            "billingInfo"=> array (
-              "document"=> "744.479.870-23",
-              "documentType"=>"CPF"
-            )
-          )
-        )
+    $countryCode = $country;
+
+    $paymentData = array(
+        "paymentMethods" => array(
+            "paymentMethodType" => 1,
+            "amount" => $amount,
+            "installments" => 1,
+            "cardInfo" => array(
+                "token" => $remoteGatewayToken,
+                "tokenProvider" => "Tuna",
+                "cardHolderName" => $fullname,
+                "expirationMonth" => $expirationMonth,
+                "expirationYear" => $expirationYear,
+                "brandName" => $cardType,
+                "tokenSingleUse" => 0,
+                "saveCard" => false,
+                "billingInfo" => array(
+                    "document" => "744.479.870-23",
+                    "documentType" => "CPF",
+                ),
+            ),
+        ),
     );
 
     $card = array(
@@ -241,7 +256,7 @@ function tunagateway_capture($params)
         'paymentItems' => $paymentItems,
         'paymentData' => $paymentData,
         'deliveryAddress' => $deliveryAddress,
-        'countryCode'=> $countryCode
+        'countryCode' => $countryCode,
     ];
 
     $ch = curl_init();
@@ -265,6 +280,8 @@ function tunagateway_capture($params)
             'rawdata' => $data,
             // Unique Transaction ID for the capture transaction
             'transid' => $data->operationId,
+            // Return only if the token has updated or changed
+            'gatewayid' => $response['token'],
         ];
     } else {
         $returnData = [
@@ -280,7 +297,13 @@ function tunagateway_capture($params)
     return $returnData;
 }
 
-function tunagateway_storeremote($params) {
+function tunagateway_storeremote($params)
+{
+    // Gateway Configuration Parameters
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
+    $testMode = $params['testMode'];
+
     $action = $params['action'];
     $gatewayid = $params['gatewayid'];
     $cardtype = $params['cardtype'];
@@ -288,6 +311,21 @@ function tunagateway_storeremote($params) {
     $cardexp = $params['cardexp'];
     $cardstart = $params['cardstart'];
     $cardissuenum = $params['cardissuenum'];
+
+    // Client Parameters
+    $firstname = $params['clientdetails']['firstname'];
+    $lastname = $params['clientdetails']['lastname'];
+    $email = $params['clientdetails']['email'];
+    $address1 = $params['clientdetails']['address1'];
+    $address2 = $params['clientdetails']['address2'];
+    $city = $params['clientdetails']['city'];
+    $state = $params['clientdetails']['state'];
+    $postcode = $params['clientdetails']['postcode'];
+    $country = $params['clientdetails']['country'];
+    $phone = $params['clientdetails']['phonenumber'];
+    $taxid = $params['clientdetails']['taxid'];
+    $userid = $params['clientdetails']['clientid'];
+    $fullname = $params['clientdetails']['fullname'];
 
     try {
         $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
@@ -303,7 +341,7 @@ function tunagateway_storeremote($params) {
                 'cardexpiry' => $cardexp,
                 'cardcvv' => $params['cccvv'],
             ];
-        
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/store');
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -311,7 +349,7 @@ function tunagateway_storeremote($params) {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
-        
+
             $data = json_decode($response);
 
             return [
@@ -325,7 +363,7 @@ function tunagateway_storeremote($params) {
                 'remote_id' => $gatewayid,
                 'cardexpiry' => $cardexp,
             ];
-        
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/update');
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -333,7 +371,7 @@ function tunagateway_storeremote($params) {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
-        
+
             $data = json_decode($response);
             return [
                 'status' => 'success',
@@ -345,7 +383,7 @@ function tunagateway_storeremote($params) {
             $postfields = [
                 'remote_id' => $gatewayid,
             ];
-        
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -353,7 +391,7 @@ function tunagateway_storeremote($params) {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
-        
+
             $data = json_decode($response);
             return [
                 'status' => 'success',
@@ -414,6 +452,7 @@ function tunagateway_refund($params)
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
+    $partnerUniqueId = $invoiceId;
     $postHeader = array(
         "accept" => "application/json",
         "x-tuna-account" => $tunaAccount,
@@ -421,22 +460,21 @@ function tunagateway_refund($params)
         "Content-Type" => "application/json",
     );
 
-    $cardDetail = array (
-        "amount"=>$refundAmount,
-        "methodId"=>0,
-        "Splits"=> array (
-            "MerchantID"=>"",
-            "Amount"=>$refundAmount
-        )
+    $cardDetail = array(
+        "amount" => $refundAmount,
+        "methodId" => 0,
+        "Splits" => array(
+            "MerchantID" => "",
+            "Amount" => $refundAmount,
+        ),
     );
 
     $postfields = [
         'cardDetail' => $cardDetail,
         'paymentKey' => '',
         'partnerUniqueId' => $partnerUniqueId,
-        'paymentDay' => ''
+        'paymentDay' => '',
     ];
-
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
@@ -449,8 +487,6 @@ function tunagateway_refund($params)
 
     $data = json_decode($response);
 
-
-
     // perform API call to initiate refund and interpret result
 
     return array(
@@ -462,4 +498,3 @@ function tunagateway_refund($params)
         'transid' => $transactionIdToRefund,
     );
 }
-
