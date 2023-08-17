@@ -1,7 +1,7 @@
 {
     "schema": "1.0",
     "type": "whmcs-gateways",
-    "name": "Tuna-gateway-module",
+    "name": "tuna-merchant-whmcs",
     "license": "MIT",
     "category": "gateway",
     "description": {
