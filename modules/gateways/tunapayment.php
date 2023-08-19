@@ -3,7 +3,7 @@
  * WHMCS Tuna Payment Gateway Module
  */
 
-require_once __DIR__ . '/tunagateway/tunagatewayhelper.php';
+require_once __DIR__ . '/tunapayment/tunagatewayhelper.php';
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
