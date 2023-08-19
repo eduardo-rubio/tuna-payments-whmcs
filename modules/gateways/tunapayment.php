@@ -9,8 +9,8 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-$tunagateway_Description = "Tuna";
-$tunagateway_Version = "1.0.0";
+$tunapayment_Description = "Tuna";
+$tunapayment_Version = "1.0.0";
 
 /**
  * Define module related meta data.
@@ -22,9 +22,9 @@ $tunagateway_Version = "1.0.0";
  *
  * @return array
  */
-function tunagateway_MetaData()
+function tunapayment_MetaData()
 {
-    global $tunagateway_Description;
+    global $tunapayment_Description;
 
     return array(
         'DisplayName' => 'Tuna Payment Gateway Module',
@@ -47,9 +47,9 @@ function tunagateway_MetaData()
  *
  * @return array
  */
-function tunagateway_config()
+function tunapayment_config()
 {
-    global $tunagateway_Description, $tunagateway_Version;
+    global $tunapayment_Description, $tunapayment_Version;
 
     return array(
         // the friendly display name for a payment gateway should be
@@ -96,7 +96,7 @@ function tunagateway_config()
  *
  * @return array Transaction response status
  */
-function tunagateway_capture($params)
+function tunapayment_capture($params)
 {
     // Gateway Configuration Parameters
     $tunaAccount = $params['tunaAccount'];
@@ -144,7 +144,7 @@ function tunagateway_capture($params)
     $whmcsVersion = $params['whmcsVersion'];
 
     try {
-        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+        $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     } catch (Exception $e) {
         return "<h4> Invalid Session </h4>";
     };
@@ -157,7 +157,7 @@ function tunagateway_capture($params)
         $expirationMonth = substr($cardExpiry, 0, 2);
         $expirationYear = "20"+substr($cardExpiry, 2, 2);
 
-            $response = tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
+            $response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
             if ($response['success']) {
                 $remoteGatewayToken = $response['token'];
             } else {
@@ -297,7 +297,7 @@ function tunagateway_capture($params)
     return $returnData;
 }
 
-function tunagateway_storeremote($params)
+function tunapayment_storeremote($params)
 {
     // Gateway Configuration Parameters
     $tunaAccount = $params['tunaAccount'];
@@ -328,7 +328,7 @@ function tunagateway_storeremote($params)
     $fullname = $params['clientdetails']['fullname'];
 
     try {
-        $sessionId = tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+        $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     } catch (Exception $e) {
         return "<h4> Invalid Session </h4>";
     };
@@ -411,7 +411,7 @@ function tunagateway_storeremote($params)
  *
  * @return array Transaction response status
  */
-function tunagateway_refund($params)
+function tunapayment_refund($params)
 {
     // Gateway Configuration Parameters
     $tunaAccount = $params['tunaAccount'];

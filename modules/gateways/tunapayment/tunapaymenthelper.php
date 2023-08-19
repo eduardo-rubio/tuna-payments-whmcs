@@ -20,7 +20,7 @@ $global_id = 0;
 $global_email = "";
 $global_sessionId = 0;
 
-function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email)
+function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email)
 {
     global $global_sessionId, $global_id, $global_email;
 
@@ -72,7 +72,7 @@ function tunagateway_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     return $global_sessionId;
 }
 
-function tunagateway_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $cardHolderName, $cardNumber,
+function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $cardHolderName, $cardNumber,
     $expirationMonth, $expirationYear, $cvv, $singleUse) {
 
         
