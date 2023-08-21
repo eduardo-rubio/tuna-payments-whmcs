@@ -6,4 +6,4 @@ Payment Gateway modules allow you to integrate Tuna payment gateway with the WHM
 platform.
 
 
-![Tuna!](tuna.png)
+![Tuna!](modules/gateways/tunapayment/tuna.png)
