@@ -157,19 +157,20 @@ function tunapayment_capture($params)
         $expirationMonth = substr($cardExpiry, 0, 2);
         $expirationYear = "20"+substr($cardExpiry, 2, 2);
 
-            $response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
-            if ($response['success']) {
-                $remoteGatewayToken = $response['token'];
-            } else {
-                return [
-                    // 'success' if successful, otherwise 'error' for failure
-                    'status' => 'error',
-                    // Data to be recorded in the gateway log - can be a string or array
-                    'rawdata' => $response,
-                ];
-            }
-    
-    };
+        $response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
+        if ($response['success']) {
+            $remoteGatewayToken = $response['token'];
+        } else {
+            return [
+                // 'success' if successful, otherwise 'error' for failure
+                'status' => 'error',
+                // Data to be recorded in the gateway log - can be a string or array
+                'rawdata' => $response,
+            ];
+        }
+
+    }
+    ;
 
     $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
 
@@ -178,7 +179,6 @@ function tunapayment_capture($params)
         $tunaAccount = 'demo';
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
-
 
     $partnerUniqueId = $invoiceId;
     $customer = array(
@@ -259,6 +259,7 @@ function tunapayment_capture($params)
         'countryCode' => $countryCode,
     ];
 
+    syslog(LOG_DEBUG, implode($postfields));
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
@@ -267,6 +268,7 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);
     curl_close($ch);
+    syslog(LOG_DEBUG, $response);
 
     $data = json_decode($response);
 
@@ -341,6 +343,7 @@ function tunapayment_storeremote($params)
                 'cardexpiry' => $cardexp,
                 'cardcvv' => $params['cccvv'],
             ];
+            syslog(LOG_DEBUG, implode($postfields));
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/store');
@@ -349,6 +352,7 @@ function tunapayment_storeremote($params)
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
+            syslog(LOG_DEBUG, $response);
 
             $data = json_decode($response);
 
@@ -364,6 +368,8 @@ function tunapayment_storeremote($params)
                 'cardexpiry' => $cardexp,
             ];
 
+            syslog(LOG_DEBUG, implode($postfields));
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/update');
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -371,6 +377,7 @@ function tunapayment_storeremote($params)
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
+            syslog(LOG_DEBUG, $response);
 
             $data = json_decode($response);
             return [
@@ -384,6 +391,8 @@ function tunapayment_storeremote($params)
                 'remote_id' => $gatewayid,
             ];
 
+            syslog(LOG_DEBUG, implode($postfields));
+
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
             curl_setopt($ch, CURLOPT_POST, 1);
@@ -391,6 +400,7 @@ function tunapayment_storeremote($params)
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
             curl_close($ch);
+            syslog(LOG_DEBUG, $response);
 
             $data = json_decode($response);
             return [
@@ -476,6 +486,8 @@ function tunapayment_refund($params)
         'paymentDay' => '',
     ];
 
+    syslog(LOG_DEBUG, implode($postfields));
+
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
@@ -484,6 +496,8 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);
     curl_close($ch);
+
+    syslog(LOG_DEBUG, $response);
 
     $data = json_decode($response);
 

@@ -32,26 +32,31 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
         "email" => $email,
     );
 
-    $postParameter = array(
+    $postfields = array(
         "customer" => $customer,
     );
+
+    syslog(LOG_DEBUG, implode($postfields));
+
 
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postParameter);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
 
     $errno = 200;
 
-    $data = curl_exec($ch);
+    $response = curl_exec($ch);
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
     }
     curl_close($ch);
 
+    syslog(LOG_DEBUG, $response);
+
     $global_id = $id;
     $global_email = $email;
-    $global_sessionId = $data['sessionId'];
+    $global_sessionId = $response['sessionId'];
 
     return $global_sessionId;
 }
@@ -83,20 +88,24 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
         "singleUse" => $singleUse,
         "cVV" => $cvv,
     );
-    $postParameter = array(
+    $postfields = array(
         "card" => $card,
         "sessionId" => $sessionId,
     );
 
+    syslog(LOG_DEBUG, implode($postfields));
+
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postParameter);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
 
     $errno = 200;
 
-    $response = [];
-    $data = curl_exec($ch);
+    $response = curl_exec($ch);
+
+    syslog(LOG_DEBUG, $response);
+
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
         $response = [
@@ -106,7 +115,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     } else {
         $response = [
             'success' => true,
-            'token' => $data['token'],
+            'token' => $response['token'],
         ];
     }
     curl_close($ch);
