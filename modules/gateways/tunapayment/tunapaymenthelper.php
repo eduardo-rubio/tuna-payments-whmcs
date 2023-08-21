@@ -1,5 +1,7 @@
 <?php
 
+require_once __DIR__ . '/../../../includes/modulefunctions.php';
+
 $global_id = 0;
 $global_email = "";
 $global_sessionId = 0;
@@ -36,9 +38,6 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
         "customer" => $customer,
     );
 
-    syslog(LOG_DEBUG, implode($postfields));
-
-
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
@@ -52,7 +51,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
     curl_close($ch);
 
-    syslog(LOG_DEBUG, $response);
+    logModuleCall("Tuna Payment", "tunapayment_session", $postfields, $response, "", "");
 
     $global_id = $id;
     $global_email = $email;
@@ -93,8 +92,6 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
         "sessionId" => $sessionId,
     );
 
-    syslog(LOG_DEBUG, implode($postfields));
-
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
@@ -104,7 +101,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $response = curl_exec($ch);
 
-    syslog(LOG_DEBUG, $response);
+    logModuleCall("Tuna Payment", "tunapayment_token", $postfields, $response, "", "");
 
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
