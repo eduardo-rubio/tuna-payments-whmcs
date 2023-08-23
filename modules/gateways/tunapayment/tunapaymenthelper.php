@@ -41,7 +41,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
 
     $errno = 200;
@@ -96,7 +96,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
 
     $errno = 200;
