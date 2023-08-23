@@ -244,7 +244,7 @@ function tunapayment_capture($params)
         "singleUse" => true,
     );
 
-    $postHeader = array(
+    $postheader = array(
         "accept" => "application/json",
         "x-tuna-account" => $tunaAccount,
         "x-tuna-apptoken" => $tunaApptoken,
@@ -263,14 +263,14 @@ function tunapayment_capture($params)
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);
     curl_close($ch);
-    logModuleCall("Tuna Payment", "tunapayment_capture", $postfields, $response, "", "");
+
+    logModuleCall("Tuna Payment", "tunapayment_capture", $postheader + " " + $postfields, $response, "", "");
 
     $data = json_decode($response);
 
@@ -348,7 +348,7 @@ function tunapayment_storeremote($params)
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/store');
-            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
@@ -371,7 +371,7 @@ function tunapayment_storeremote($params)
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/update');
-            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
@@ -393,7 +393,7 @@ function tunapayment_storeremote($params)
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
-            curl_setopt($ch, CURLOPT_POST, 1);
+            curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
             $response = curl_exec($ch);
@@ -461,7 +461,7 @@ function tunapayment_refund($params)
     }
 
     $partnerUniqueId = $invoiceId;
-    $postHeader = array(
+    $postheader = array(
         "accept" => "application/json",
         "x-tuna-account" => $tunaAccount,
         "x-tuna-apptoken" => $tunaApptoken,
@@ -487,9 +487,8 @@ function tunapayment_refund($params)
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
-    curl_setopt($ch, CURLOPT_POST, 1);
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
     $response = curl_exec($ch);

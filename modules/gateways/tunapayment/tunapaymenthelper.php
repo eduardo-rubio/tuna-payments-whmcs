@@ -22,7 +22,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
-    $postHeader = array(
+    $postheader = array(
         "accept" => "application/json",
         "x-tuna-account" => $tunaAccount,
         "x-tuna-apptoken" => $tunaApptoken,
@@ -40,9 +40,9 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     $ch = curl_init($tokenUrl);
 
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
 
     $errno = 200;
 
@@ -52,7 +52,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_session", $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_session", $postheader + " " + $postfields, $response, "", "");
 
     $global_id = $id;
     $global_email = $email;
@@ -73,7 +73,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
-    $postHeader = array(
+    $postheader = array(
         "accept" => "application/json",
         "x-tuna-account" => $tunaAccount,
         "x-tuna-apptoken" => $tunaApptoken,
@@ -95,15 +95,15 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $ch = curl_init($tokenUrl);
 
-    curl_setopt($ch, CURLOPT_HEADER, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
 
     $errno = 200;
 
     $response = curl_exec($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_token", $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_token", $postheader + " " + $postfields, $response, "", "");
 
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
