@@ -40,6 +40,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     $ch = curl_init($tokenUrl);
 
+    curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
 
@@ -94,6 +95,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $ch = curl_init($tokenUrl);
 
+    curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, $postfields);
 

@@ -264,6 +264,7 @@ function tunapayment_capture($params)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
@@ -487,6 +488,7 @@ function tunapayment_refund($params)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_HEADER, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
