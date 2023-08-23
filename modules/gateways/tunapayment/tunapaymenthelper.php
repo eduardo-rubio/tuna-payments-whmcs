@@ -52,7 +52,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_session", $postheader + " " + $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_session", $postheader+" "+$postfields, $response, "", "");
 
     $global_id = $id;
     $global_email = $email;
@@ -64,7 +64,6 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $cardHolderName, $cardNumber,
     $expirationMonth, $expirationYear, $cvv, $singleUse) {
 
-        
     $tokenUrl = 'https://token.tunagateway.com/api/Token/Generate';
 
     if ($testMode == 'yes') {
@@ -103,7 +102,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $response = curl_exec($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_token", $postheader + " " + $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_token", $postheader+" "+$postfields, $response, "", "");
 
     if (curl_error($ch)) {
         $errno = curl_errno($ch);

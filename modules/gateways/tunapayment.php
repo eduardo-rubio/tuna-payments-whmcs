@@ -6,7 +6,6 @@
 require_once __DIR__ . '/tunapayment/tunapaymenthelper.php';
 require_once __DIR__ . '/../../includes/modulefunctions.php';
 
-
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
@@ -121,6 +120,9 @@ function tunapayment_capture($params)
     $cardIssueNumber = $params['cardissuenum'];
     $cardCvv = $params['cccvv'];
 
+    $expirationMonth = substr($cardExpiry, 0, 2);
+    $expirationYear = "20"+substr($cardExpiry, 2, 2);
+
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
     $lastname = $params['clientdetails']['lastname'];
@@ -155,9 +157,6 @@ function tunapayment_capture($params)
         // If there is no token yet, it indicates this capture is being
         // attempted using an existing locally stored card. Create a new
         // token and then attempt capture.
-
-        $expirationMonth = substr($cardExpiry, 0, 2);
-        $expirationYear = "20"+substr($cardExpiry, 2, 2);
 
         $response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
         if ($response['success']) {
@@ -270,7 +269,7 @@ function tunapayment_capture($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", $postheader + " " + $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_capture", $postheader+" "+$postfields, $response, "", "");
 
     $data = json_decode($response);
 
@@ -315,6 +314,10 @@ function tunapayment_storeremote($params)
     $cardexp = $params['cardexp'];
     $cardstart = $params['cardstart'];
     $cardissuenum = $params['cardissuenum'];
+    $cardCvv = $params['cccvv'];
+
+    $expirationMonth = substr($cardexp, 0, 2);
+    $expirationYear = "20"+substr($cardexp, 2, 2);
 
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
@@ -340,48 +343,20 @@ function tunapayment_storeremote($params)
     switch ($action) {
         case 'create':
             // Make API call to create a token here
-            $postfields = [
-                'cardnumber' => $cardnum,
-                'cardexpiry' => $cardexp,
-                'cardcvv' => $params['cccvv'],
-            ];
-
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/store');
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            $response = curl_exec($ch);
-            curl_close($ch);
-            logModuleCall("Tuna Payment", "tunapayment_storeremote", $postfields, $response, "", "");
-
-            $data = json_decode($response);
+            $gatewayid = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
 
             return [
                 'status' => 'success',
-                'gatewayid' => $data->remote_id,
+                'gatewayid' => $gatewayid,
             ];
             break;
         case 'update':
             // Make API call to update a token here
-            $postfields = [
-                'remote_id' => $gatewayid,
-                'cardexpiry' => $cardexp,
-            ];
+            $gatewayid = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
 
-            $ch = curl_init();
-            curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/update');
-            curl_setopt($ch, CURLOPT_POST, true);
-            curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-            $response = curl_exec($ch);
-            curl_close($ch);
-            logModuleCall("Tuna Payment", "tunapayment_storeremote", $postfields, $response, "", "");
-
-            $data = json_decode($response);
             return [
                 'status' => 'success',
-                'gatewayid' => $data->remote_id,
+                'gatewayid' => $gatewayid,
             ];
             break;
         case 'delete':
@@ -389,7 +364,6 @@ function tunapayment_storeremote($params)
             $postfields = [
                 'remote_id' => $gatewayid,
             ];
-
 
             $ch = curl_init();
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
@@ -483,7 +457,6 @@ function tunapayment_refund($params)
         'partnerUniqueId' => $partnerUniqueId,
         'paymentDay' => '',
     ];
-
 
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
