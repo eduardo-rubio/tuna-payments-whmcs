@@ -135,7 +135,7 @@ function tunapayment_capture($params)
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
-    $userid = $params['clientdetails']['clientid'];
+    $userid = $params['clientdetails']['id'];
     $fullname = $params['clientdetails']['fullname'];
 
     // System Parameters
@@ -268,7 +268,7 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
@@ -334,13 +334,16 @@ function tunapayment_storeremote($params)
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
-    $userid = $params['clientdetails']['clientid'];
+    $userid = $params['clientdetails']['id'];
     $fullname = $params['clientdetails']['fullname'];
 
     try {
         $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     } catch (Exception $e) {
-        return "<h4> Invalid Session </h4>";
+        return [
+            'status' => 'error',
+            'rawdata' => 'Invalid Session:'+$e
+        ];
     };
 
     switch ($action) {
@@ -370,7 +373,7 @@ function tunapayment_storeremote($params)
             curl_setopt($ch, CURLOPT_URL, 'https://www.example.com/api/delete');
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
-            curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response = curl_exec($ch);
             curl_close($ch);
             logModuleCall("Tuna Payment", "tunapayment_storeremote", $postfields, $response, "", "");
@@ -463,7 +466,7 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
