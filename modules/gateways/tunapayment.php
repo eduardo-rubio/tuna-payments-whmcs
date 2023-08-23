@@ -150,7 +150,10 @@ function tunapayment_capture($params)
     try {
         $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     } catch (Exception $e) {
-        return "<h4> Invalid Session </h4>";
+        return [
+            'status' => 'error',
+            'rawdata' => 'Invalid Session:'+$e
+        ];
     };
 
     if (!$remoteGatewayToken) {
@@ -269,7 +272,7 @@ function tunapayment_capture($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", $postheader+" "+$postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_capture", $postfields, $response, "", "");
 
     $data = json_decode($response);
 
@@ -349,7 +352,6 @@ function tunapayment_storeremote($params)
                 'status' => 'success',
                 'gatewayid' => $gatewayid,
             ];
-            break;
         case 'update':
             // Make API call to update a token here
             $gatewayid = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
@@ -358,7 +360,6 @@ function tunapayment_storeremote($params)
                 'status' => 'success',
                 'gatewayid' => $gatewayid,
             ];
-            break;
         case 'delete':
             // Make API call to delete a token here
             $postfields = [
@@ -378,7 +379,6 @@ function tunapayment_storeremote($params)
             return [
                 'status' => 'success',
             ];
-            break;
     }
 }
 

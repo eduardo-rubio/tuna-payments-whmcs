@@ -4,7 +4,10 @@
     "type": "whmcs-gateways",
     "version": "1.0.0",
     "require": {
-        "composer/installers": "^1.10"
+        "composer/installers": "~1.10"
+    },
+    "require-dev": {
+        "composer-plugin-api": "^1.0 | ^2.0"
     },
     "keywords": [
         "whmcs",
@@ -13,18 +16,18 @@
         "gateway module",
         "merchant gateway"
     ],
-    "homepage": "https:\/\/dev.tuna.uy", 
+    "homepage": "https://dev.tuna.uy",
     "license": "MIT",
     "authors": [
         {
             "name": "Edu Rubio",
             "email": "edurubio0810@gmail.com",
-            "homepage": "https:\/\/github.com\/eduardo-rubio",
+            "homepage": "https://github.com/eduardo-rubio",
             "role": "Developer"
         }
     ],
     "support": {
-        "forum": "https:\/\/dev.tuna.uy" 
+        "forum": "https://dev.tuna.uy"
     },
     "config": {
         "allow-plugins": {
