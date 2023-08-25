@@ -147,29 +147,33 @@ function tunapayment_capture($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    try {
-        $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
-    } catch (Exception $e) {
+    $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    if ($session_response['success']) {
+        $remoteGatewayToken = $session_response['token'];
+    } else {
         return [
+            // 'success' if successful, otherwise 'error' for failure
             'status' => 'error',
-            'rawdata' => 'Invalid Session:'+$e
+            // Data to be recorded in the gateway log - can be a string or array
+            'rawdata' => $session_response,
         ];
-    };
+    }
+
 
     if (!$remoteGatewayToken) {
         // If there is no token yet, it indicates this capture is being
         // attempted using an existing locally stored card. Create a new
         // token and then attempt capture.
 
-        $response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
-        if ($response['success']) {
-            $remoteGatewayToken = $response['token'];
+        $token_response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
+        if ($token_response['success']) {
+            $remoteGatewayToken = $token_response['token'];
         } else {
             return [
                 // 'success' if successful, otherwise 'error' for failure
                 'status' => 'error',
                 // Data to be recorded in the gateway log - can be a string or array
-                'rawdata' => $response,
+                'rawdata' => $token_response,
             ];
         }
 
@@ -267,7 +271,7 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
@@ -465,7 +469,7 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
