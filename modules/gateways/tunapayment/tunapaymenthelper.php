@@ -23,10 +23,10 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
 
     $postheader = array(
-        "accept" => "application/json",
-        "x-tuna-account" => $tunaAccount,
-        "x-tuna-apptoken" => $tunaApptoken,
-        "Content-Type" => "application/json",
+        "accept : application/json",
+        "x-tuna-account : " + $tunaAccount,
+        "x-tuna-apptoken : " + $tunaApptoken,
+        "Content-Type : application/json",
     );
 
     $customer = array(
@@ -41,7 +41,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
@@ -77,10 +77,10 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     }
 
     $postheader = array(
-        "accept" => "application/json",
-        "x-tuna-account" => $tunaAccount,
-        "x-tuna-apptoken" => $tunaApptoken,
-        "Content-Type" => "application/json",
+        "accept : application/json",
+        "x-tuna-account : " + $tunaAccount,
+        "x-tuna-apptoken : " + $tunaApptoken,
+        "Content-Type : application/json",
     );
 
     $card = array(
@@ -99,7 +99,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     $ch = curl_init($tokenUrl);
 
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 

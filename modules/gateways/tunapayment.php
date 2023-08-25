@@ -247,10 +247,10 @@ function tunapayment_capture($params)
     );
 
     $postheader = array(
-        "accept" => "application/json",
-        "x-tuna-account" => $tunaAccount,
-        "x-tuna-apptoken" => $tunaApptoken,
-        "Content-Type" => "application/json",
+        "accept : application/json",
+        "x-tuna-account : " + $tunaAccount,
+        "x-tuna-apptoken : " + $tunaApptoken,
+        "Content-Type : application/json",
     );
 
     $postfields = [
@@ -266,7 +266,7 @@ function tunapayment_capture($params)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
@@ -439,10 +439,10 @@ function tunapayment_refund($params)
 
     $partnerUniqueId = $invoiceId;
     $postheader = array(
-        "accept" => "application/json",
-        "x-tuna-account" => $tunaAccount,
-        "x-tuna-apptoken" => $tunaApptoken,
-        "Content-Type" => "application/json",
+        "accept : application/json",
+        "x-tuna-account : " + $tunaAccount,
+        "x-tuna-apptoken : " + $tunaApptoken,
+        "Content-Type : application/json",
     );
 
     $cardDetail = array(
@@ -464,7 +464,7 @@ function tunapayment_refund($params)
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, http_build_query($postheader));
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
