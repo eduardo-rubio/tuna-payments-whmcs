@@ -249,10 +249,10 @@ function tunapayment_capture($params)
     );
 
     $postheader = array(
-        'accept : application/json',
-        'Content-Type : application/json',
-        'x-tuna-account : ' . $tunaAccount,
-        'x-tuna-apptoken : ' . $tunaApptoken,
+        'accept: application/json',
+        'Content-Type: application/json',
+        'x-tuna-account: ' . $tunaAccount,
+        'x-tuna-apptoken: ' . $tunaApptoken,
     );
 
     $postfields = [
@@ -471,10 +471,10 @@ function tunapayment_refund($params)
     $partnerUniqueId = $invoiceId;
 
     $postheader = array(
-        'accept : application/json',
-        'Content-Type : application/json',
-        'x-tuna-account : ' . $tunaAccount,
-        'x-tuna-apptoken : ' . $tunaApptoken,
+        'accept: application/json',
+        'Content-Type: application/json',
+        'x-tuna-account: ' . $tunaAccount,
+        'x-tuna-apptoken: ' . $tunaApptoken,
     );
 
     $cardDetail = array(
