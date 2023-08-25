@@ -159,7 +159,6 @@ function tunapayment_capture($params)
         ];
     }
 
-
     if (!$remoteGatewayToken) {
         // If there is no token yet, it indicates this capture is being
         // attempted using an existing locally stored card. Create a new
@@ -307,6 +306,13 @@ function tunapayment_capture($params)
     return $returnData;
 }
 
+/**
+ * tunapayment_storeremote
+ *
+ * @param array $params Payment Gateway Module Parameters
+ * 
+ * @return array
+ */
 function tunapayment_storeremote($params)
 {
     // Gateway Configuration Parameters
@@ -356,20 +362,36 @@ function tunapayment_storeremote($params)
     switch ($action) {
         case 'create':
             // Make API call to create a token here
-            $gatewayid = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
-
-            return [
-                'status' => 'success',
-                'gatewayid' => $gatewayid,
-            ];
+            $token_response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
+            if ($token_response['success']) {
+                return [
+                    'status' => 'success',
+                    'gatewayid' => $token_response['token'],
+                ];
+            } else {
+                return [
+                    // 'success' if successful, otherwise 'error' for failure
+                    'status' => 'error',
+                    // Data to be recorded in the gateway log - can be a string or array
+                    'rawdata' => $token_response,
+                ];
+            }
         case 'update':
             // Make API call to update a token here
-            $gatewayid = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
-
-            return [
-                'status' => 'success',
-                'gatewayid' => $gatewayid,
-            ];
+            $token_response = tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
+            if ($token_response['success']) {
+                return [
+                    'status' => 'success',
+                    'gatewayid' => $token_response['token'],
+                ];
+            } else {
+                return [
+                    // 'success' if successful, otherwise 'error' for failure
+                    'status' => 'error',
+                    // Data to be recorded in the gateway log - can be a string or array
+                    'rawdata' => $token_response,
+                ];
+            }
         case 'delete':
             // Make API call to delete a token here
             $postfields = [
@@ -390,6 +412,9 @@ function tunapayment_storeremote($params)
                 'status' => 'success',
             ];
     }
+    return [
+        'status' => 'error'
+    ];
 }
 
 /**
