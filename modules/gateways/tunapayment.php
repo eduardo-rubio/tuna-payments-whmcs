@@ -149,7 +149,7 @@ function tunapayment_capture($params)
 
     $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     if ($session_response['success']) {
-        $remoteGatewayToken = $session_response['token'];
+        $sessionId = $session_response['session'];
     } else {
         return [
             // 'success' if successful, otherwise 'error' for failure
@@ -276,7 +276,7 @@ function tunapayment_capture($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, "", "");
 
     $data = json_decode($response);
 
@@ -341,14 +341,17 @@ function tunapayment_storeremote($params)
     $userid = $params['clientdetails']['id'];
     $fullname = $params['clientdetails']['fullname'];
 
-    try {
-        $sessionId = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
-    } catch (Exception $e) {
+    $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
+    if ($session_response['success']) {
+        $sessionId = $session_response['session'];
+    } else {
         return [
+            // 'success' if successful, otherwise 'error' for failure
             'status' => 'error',
-            'rawdata' => 'Invalid Session:'+$e
+            // Data to be recorded in the gateway log - can be a string or array
+            'rawdata' => $session_response,
         ];
-    };
+    }
 
     switch ($action) {
         case 'create':
@@ -380,7 +383,7 @@ function tunapayment_storeremote($params)
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             $response = curl_exec($ch);
             curl_close($ch);
-            logModuleCall("Tuna Payment", "tunapayment_storeremote", $postfields, $response, "", "");
+            logModuleCall("Tuna Payment", "tunapayment_storeremote", http_build_query($postfields), $response, "", "");
 
             $data = json_decode($response);
             return [
@@ -474,7 +477,7 @@ function tunapayment_refund($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_refund", $postfields, $response, "", "");
+    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, "", "");
 
     $data = json_decode($response);
 
