@@ -39,7 +39,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
         "accept : application/json",
         "x-tuna-account : " . $tunaAccount,
         "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json",
+        "Content-Type : application/json"
     );
 
     $customer = array(
@@ -65,10 +65,9 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
         $errno = curl_errno($ch);
     }
     curl_close($ch);
-
-    logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields), $session_response, "", "");
-
     $session_data = json_decode($session_response);
+
+    logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields), $session_response, $session_data, $postheader);
 
     $global_id = $id;
     $global_email = $email;
@@ -111,7 +110,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
         "accept : application/json",
         "x-tuna-account : " . $tunaAccount,
         "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json",
+        "Content-Type : application/json"
     );
 
     $card = array(
@@ -137,10 +136,9 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     $errno = 200;
 
     $token_response = curl_exec($ch);
+    $token_data = json_decode($token_response);
 
-    logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, "", "");
-
-    $data = json_decode($token_response);
+    logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, $token_data, $postheader);
 
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
@@ -152,7 +150,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     } else {
         $response = [
             'success' => true,
-            'token' => $data->token,
+            'token' => $token_data->token,
         ];
     }
     curl_close($ch);

@@ -157,7 +157,7 @@ function tunapayment_capture($params)
             // Data to be recorded in the gateway log - can be a string or array
             'rawdata' => $session_response,
         ];
-    }
+    };
 
     if (!$remoteGatewayToken) {
         // If there is no token yet, it indicates this capture is being
@@ -176,8 +176,7 @@ function tunapayment_capture($params)
             ];
         }
 
-    }
-    ;
+    };
 
     $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
 
@@ -253,7 +252,7 @@ function tunapayment_capture($params)
         "accept : application/json",
         "x-tuna-account : " . $tunaAccount,
         "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json",
+        "Content-Type : application/json"
     );
 
     $postfields = [
@@ -275,9 +274,9 @@ function tunapayment_capture($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, "", "");
-
     $data = json_decode($response);
+
+    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, $data, $postheader);
 
     // perform API call to capture payment and interpret result
 
@@ -474,7 +473,7 @@ function tunapayment_refund($params)
         "accept : application/json",
         "x-tuna-account : " . $tunaAccount,
         "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json",
+        "Content-Type : application/json"
     );
 
     $cardDetail = array(
@@ -502,9 +501,9 @@ function tunapayment_refund($params)
     $response = curl_exec($ch);
     curl_close($ch);
 
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, "", "");
-
     $data = json_decode($response);
+
+    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, $data, $postheader);
 
     // perform API call to initiate refund and interpret result
 
