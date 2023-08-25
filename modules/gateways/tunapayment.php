@@ -269,14 +269,14 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
     $data = json_decode($response);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
 
     // perform API call to capture payment and interpret result
 
@@ -497,14 +497,14 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
     $data = json_decode($response);
 
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
 
     // perform API call to initiate refund and interpret result
 

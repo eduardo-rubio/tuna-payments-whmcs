@@ -55,7 +55,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
     $errno = 200;
@@ -67,7 +67,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     curl_close($ch);
     $session_data = json_decode($session_response);
 
-    logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields), $session_response, $session_data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields, JSON_FORCE_OBJECT), $session_response, $session_data, $postheader);
 
     $global_id = $id;
     $global_email = $email;
@@ -130,7 +130,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
 
     $errno = 200;
@@ -138,7 +138,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     $token_response = curl_exec($ch);
     $token_data = json_decode($token_response);
 
-    logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, $token_data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields, JSON_FORCE_OBJECT), $token_response, $token_data, $postheader);
 
     if (curl_error($ch)) {
         $errno = curl_errno($ch);
