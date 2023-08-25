@@ -3,7 +3,7 @@
 require_once __DIR__ . '/../../../includes/modulefunctions.php';
 
 $global_id = 0;
-$global_email = "";
+$global_email = '';
 $global_sessionId = 0;
 
 /**
@@ -36,19 +36,19 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     }
 
     $postheader = array(
-        "accept : application/json",
-        "x-tuna-account : " . $tunaAccount,
-        "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json"
+        'accept : application/json',
+        'Content-Type : application/json',
+        'x-tuna-account : ' . $tunaAccount,
+        'x-tuna-apptoken : ' . $tunaApptoken,
     );
 
     $customer = array(
-        "id" => $id,
-        "email" => $email,
+        'id' => $id,
+        'email' => $email,
     );
 
     $postfields = array(
-        "customer" => $customer,
+        'customer' => $customer,
     );
 
     $ch = curl_init($tokenUrl);
@@ -107,23 +107,23 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     }
 
     $postheader = array(
-        "accept : application/json",
-        "x-tuna-account : " . $tunaAccount,
-        "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json"
+        'accept : application/json',
+        'Content-Type : application/json',
+        'x-tuna-account : ' . $tunaAccount,
+        'x-tuna-apptoken : ' . $tunaApptoken,
     );
 
     $card = array(
-        "cardNumber" => $cardNumber,
-        "cardHolderName" => $cardHolderName,
-        "expirationMonth" => $expirationMonth,
-        "expirationYear" => $expirationYear,
-        "singleUse" => $singleUse,
-        "cVV" => $cvv,
+        'cardNumber' => $cardNumber,
+        'cardHolderName' => $cardHolderName,
+        'expirationMonth' => $expirationMonth,
+        'expirationYear' => $expirationYear,
+        'singleUse' => $singleUse,
+        'cVV' => $cvv,
     );
     $postfields = array(
-        "card" => $card,
-        "sessionId" => $sessionId,
+        'card' => $card,
+        'sessionId' => $sessionId,
     );
 
     $ch = curl_init($tokenUrl);
@@ -144,7 +144,7 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
         $errno = curl_errno($ch);
         $response = [
             'success' => false,
-            'token' => "",
+            'token' => '',
         ];
 
     } else {

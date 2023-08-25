@@ -188,71 +188,71 @@ function tunapayment_capture($params)
 
     $partnerUniqueId = $invoiceId;
     $customer = array(
-        "id" => $userid,
-        "email" => $email,
-        "document" => $taxid,
-        "documentType" => "TAXID",
-        "name" => $fullname,
+        'id' => $userid,
+        'email' => $email,
+        'document' => $taxid,
+        'documentType' => 'TAXID',
+        'name' => $fullname,
     );
 
     $paymentItems = array(
-        "items" => array(
-            "amount" => $amount,
-            "detailUniqueId" => $invoiceId,
-            "productDescription" => $description,
-            "itemQuantity" => 1,
+        'items' => array(
+            'amount' => $amount,
+            'detailUniqueId' => $invoiceId,
+            'productDescription' => $description,
+            'itemQuantity' => 1,
         ),
     );
 
     $deliveryAddress = array(
-        "street" => $address1,
-        "number" => $address2,
-        "neighborhood" => $city,
-        "city" => $city,
-        "state" => $state,
-        "postalCode" => $postcode,
-        "phone" => $phone,
-        "country" => $country,
+        'street' => $address1,
+        'number' => $address2,
+        'neighborhood' => $city,
+        'city' => $city,
+        'state' => $state,
+        'postalCode' => $postcode,
+        'phone' => $phone,
+        'country' => $country,
     );
 
     $countryCode = $country;
 
     $paymentData = array(
-        "paymentMethods" => array(
-            "paymentMethodType" => 1,
-            "amount" => $amount,
-            "installments" => 1,
-            "cardInfo" => array(
-                "token" => $remoteGatewayToken,
-                "tokenProvider" => "Tuna",
-                "cardHolderName" => $fullname,
-                "expirationMonth" => $expirationMonth,
-                "expirationYear" => $expirationYear,
-                "brandName" => $cardType,
-                "tokenSingleUse" => 0,
-                "saveCard" => false,
-                "billingInfo" => array(
-                    "document" => "744.479.870-23",
-                    "documentType" => "CPF",
+        'paymentMethods' => array(
+            'paymentMethodType' => 1,
+            'amount' => $amount,
+            'installments' => 1,
+            'cardInfo' => array(
+                'token' => $remoteGatewayToken,
+                'tokenProvider' => 'Tuna',
+                'cardHolderName' => $fullname,
+                'expirationMonth' => $expirationMonth,
+                'expirationYear' => $expirationYear,
+                'brandName' => $cardType,
+                'tokenSingleUse' => 0,
+                'saveCard' => false,
+                'billingInfo' => array(
+                    'document' => '744.479.870-23',
+                    'documentType' => 'CPF',
                 ),
             ),
         ),
     );
 
     $card = array(
-        "cardHolderName" => $fullname,
-        "cardNumber" => $cardIssueNumber,
-        "expirationMonth" => $expirationMonth,
-        "expirationYear" => $expirationYear,
-        "cvv" => $cardCvv,
-        "singleUse" => true,
+        'cardHolderName' => $fullname,
+        'cardNumber' => $cardIssueNumber,
+        'expirationMonth' => $expirationMonth,
+        'expirationYear' => $expirationYear,
+        'cvv' => $cardCvv,
+        'singleUse' => true,
     );
 
     $postheader = array(
-        "accept : application/json",
-        "x-tuna-account : " . $tunaAccount,
-        "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json"
+        'accept : application/json',
+        'Content-Type : application/json',
+        'x-tuna-account : ' . $tunaAccount,
+        'x-tuna-apptoken : ' . $tunaApptoken,
     );
 
     $postfields = [
@@ -469,19 +469,20 @@ function tunapayment_refund($params)
     }
 
     $partnerUniqueId = $invoiceId;
+
     $postheader = array(
-        "accept : application/json",
-        "x-tuna-account : " . $tunaAccount,
-        "x-tuna-apptoken : " . $tunaApptoken,
-        "Content-Type : application/json"
+        'accept : application/json',
+        'Content-Type : application/json',
+        'x-tuna-account : ' . $tunaAccount,
+        'x-tuna-apptoken : ' . $tunaApptoken,
     );
 
     $cardDetail = array(
-        "amount" => $refundAmount,
-        "methodId" => 0,
-        "Splits" => array(
-            "MerchantID" => "",
-            "Amount" => $refundAmount,
+        'amount' => $refundAmount,
+        'methodId' => 0,
+        'Splits' => array(
+            'MerchantID' => '',
+            'Amount' => $refundAmount,
         ),
     );
 
