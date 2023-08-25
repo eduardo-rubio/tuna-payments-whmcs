@@ -24,8 +24,8 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     $postheader = array(
         "accept : application/json",
-        "x-tuna-account : " + $tunaAccount,
-        "x-tuna-apptoken : " + $tunaApptoken,
+        "x-tuna-account : " . $tunaAccount,
+        "x-tuna-apptoken : " . $tunaApptoken,
         "Content-Type : application/json",
     );
 
@@ -78,8 +78,8 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
 
     $postheader = array(
         "accept : application/json",
-        "x-tuna-account : " + $tunaAccount,
-        "x-tuna-apptoken : " + $tunaApptoken,
+        "x-tuna-account : " . $tunaAccount,
+        "x-tuna-apptoken : " . $tunaApptoken,
         "Content-Type : application/json",
     );
 
