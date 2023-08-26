@@ -188,9 +188,9 @@ function tunapayment_capture($params)
 
     $partnerUniqueId = $invoiceId;
     $customer = array(
-        'id' => $userid,
+        'id' => strval($userid),
         'email' => $email,
-        'document' => $taxid,
+        'document' => strval($taxid),
         'documentType' => 'TAXID',
         'name' => $fullname,
     );
@@ -219,7 +219,7 @@ function tunapayment_capture($params)
 
     $paymentData = array(
         'paymentMethods' => array(
-            'paymentMethodType' => 1,
+            'paymentMethodType' => '1',
             'amount' => $amount,
             'installments' => 1,
             'cardInfo' => array(

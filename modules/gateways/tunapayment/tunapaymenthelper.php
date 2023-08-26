@@ -43,7 +43,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     );
 
     $customer = array(
-        'id' => $id,
+        'id' => strval($id),
         'email' => $email,
     );
 
@@ -114,12 +114,12 @@ function tunapayment_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $
     );
 
     $card = array(
-        'cardNumber' => $cardNumber,
+        'cardNumber' => strval($cardNumber),
         'cardHolderName' => $cardHolderName,
         'expirationMonth' => $expirationMonth,
         'expirationYear' => $expirationYear,
         'singleUse' => $singleUse,
-        'cVV' => $cvv,
+        'cVV' => strval($cvv),
     );
     $postfields = array(
         'card' => $card,
