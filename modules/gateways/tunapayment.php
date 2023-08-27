@@ -121,7 +121,7 @@ function tunapayment_capture($params)
     $cardCvv = $params['cccvv'];
 
     $expirationMonth = substr($cardExpiry, 0, 2);
-    $expirationYear = "20"+substr($cardExpiry, 2, 2);
+    $expirationYear = "20".substr($cardExpiry, 2, 2);
 
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
@@ -196,12 +196,12 @@ function tunapayment_capture($params)
     );
 
     $paymentItems = array(
-        'items' => array(
+        'items' => [ array(
             'amount' => $amount,
             'detailUniqueId' => $invoiceId,
             'productDescription' => $description,
             'itemQuantity' => 1,
-        ),
+        )],
     );
 
     $deliveryAddress = array(
@@ -218,7 +218,7 @@ function tunapayment_capture($params)
     $countryCode = $country;
 
     $paymentData = array(
-        'paymentMethods' => array(
+        'paymentMethods' => [array(
             'paymentMethodType' => '1',
             'amount' => $amount,
             'installments' => 1,
@@ -236,7 +236,7 @@ function tunapayment_capture($params)
                     'documentType' => 'CPF',
                 ),
             ),
-        ),
+        )],
     );
 
     $card = array(
