@@ -29,9 +29,11 @@ function tunapayment_MetaData()
 
     return array(
         'DisplayName' => 'Tuna Payment Gateway Module',
-        'APIVersion' => '1.1', // Use API Version 1.1
+        // Use API Version 1.1
+        'APIVersion' => '1.1',
+        // You can utilise custom templates here
         'failedEmail' => 'Credit Card Payment Failed',
-        'successEmail' => 'Custom Credit Card Payment Template', // You can utilise custom templates here
+        'successEmail' => 'Custom Credit Card Payment Template',
         'pendingEmail' => 'Custom Credit Card Pending Template',
         'DisableLocalCreditCardInput' => false,
         'TokenisedStorage' => true,
@@ -121,7 +123,7 @@ function tunapayment_capture($params)
     $cardCvv = $params['cccvv'];
 
     $expirationMonth = substr($cardExpiry, 0, 2);
-    $expirationYear = "20".substr($cardExpiry, 2, 2);
+    $expirationYear = "20" . substr($cardExpiry, 2, 2);
 
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
@@ -157,7 +159,8 @@ function tunapayment_capture($params)
             // Data to be recorded in the gateway log - can be a string or array
             'rawdata' => $session_response,
         ];
-    };
+    }
+    ;
 
     if (!$remoteGatewayToken) {
         // If there is no token yet, it indicates this capture is being
@@ -175,8 +178,8 @@ function tunapayment_capture($params)
                 'rawdata' => $token_response,
             ];
         }
-
-    };
+    }
+    ;
 
     $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
 
@@ -196,12 +199,14 @@ function tunapayment_capture($params)
     );
 
     $paymentItems = array(
-        'items' => [ array(
-            'amount' => $amount,
-            'detailUniqueId' => $invoiceId,
-            'productDescription' => $description,
-            'itemQuantity' => 1,
-        )],
+        'items' => [
+            array(
+                'amount' => $amount,
+                'detailUniqueId' => $invoiceId,
+                'productDescription' => $description,
+                'itemQuantity' => 1,
+            )
+        ]
     );
 
     $deliveryAddress = array(
@@ -218,25 +223,27 @@ function tunapayment_capture($params)
     $countryCode = $country;
 
     $paymentData = array(
-        'paymentMethods' => [array(
-            'paymentMethodType' => '1',
-            'amount' => $amount,
-            'installments' => 1,
-            'cardInfo' => array(
-                'token' => $remoteGatewayToken,
-                'tokenProvider' => 'Tuna',
-                'cardHolderName' => $fullname,
-                'expirationMonth' => $expirationMonth,
-                'expirationYear' => $expirationYear,
-                'brandName' => $cardType,
-                'tokenSingleUse' => 0,
-                'saveCard' => false,
-                'billingInfo' => array(
-                    'document' => '744.479.870-23',
-                    'documentType' => 'CPF',
+        'paymentMethods' => [
+            array(
+                'paymentMethodType' => '1',
+                'amount' => $amount,
+                'installments' => 1,
+                'cardInfo' => array(
+                    'token' => $remoteGatewayToken,
+                    'tokenProvider' => 'Tuna',
+                    'cardHolderName' => $fullname,
+                    'expirationMonth' => $expirationMonth,
+                    'expirationYear' => $expirationYear,
+                    'brandName' => $cardType,
+                    'tokenSingleUse' => 0,
+                    'saveCard' => false,
+                    'billingInfo' => array(
+                        'document' => '744.479.870-23',
+                        'documentType' => 'CPF',
+                    ),
                 ),
-            ),
-        )],
+            )
+        ],
     );
 
     $card = array(
@@ -269,14 +276,14 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
     $data = json_decode($response);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, $data, $postheader);
 
     // perform API call to capture payment and interpret result
 
@@ -329,7 +336,7 @@ function tunapayment_storeremote($params)
     $cardCvv = $params['cccvv'];
 
     $expirationMonth = substr($cardexp, 0, 2);
-    $expirationYear = "20"+substr($cardexp, 2, 2);
+    $expirationYear = "20" . substr($cardexp, 2, 2);
 
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
@@ -497,23 +504,33 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
     $data = json_decode($response);
 
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, $data, $postheader);
 
     // perform API call to initiate refund and interpret result
 
+    if ($data->code) {
+        if ($data->status == 1) {
+            return array(
+                // 'success' if successful, otherwise 'declined', 'error' for failure
+                'status' => 'success',
+                // Data to be recorded in the gateway log - can be a string or array
+                'rawdata' => $data,
+                // Unique Transaction ID for the refund transaction
+                'transid' => $transactionIdToRefund,
+            );
+
+        }
+    }
+    ;
     return array(
-        // 'success' if successful, otherwise 'declined', 'error' for failure
-        'status' => 'success',
-        // Data to be recorded in the gateway log - can be a string or array
+        'status' => 'error',
         'rawdata' => $data,
-        // Unique Transaction ID for the refund transaction
-        'transid' => $transactionIdToRefund,
     );
 }
