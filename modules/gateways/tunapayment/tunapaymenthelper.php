@@ -69,7 +69,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields), $session_response, $session_data, $postheader);
 
-    if ($session_data->code) {
+    if ($session_data->code==1) {
         $global_id = $id;
         $global_email = $email;
         $global_sessionId = $session_data->sessionId;
@@ -157,7 +157,7 @@ function tunapayment_token(
 
     logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, $token_data, $postheader);
 
-    if ($token_data->code) {
+    if ($token_data->code==1) {
         return [
             'success' => true,
             'token' => $token_data->token,

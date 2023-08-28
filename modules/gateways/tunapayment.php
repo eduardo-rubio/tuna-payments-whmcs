@@ -222,9 +222,9 @@ function tunapayment_capture($params)
 
     $countryCode = $country;
 
-    $paymentData = array(
+    $paymentData = array (
         'paymentMethods' => [
-            array(
+            array (
                 'paymentMethodType' => '1',
                 'amount' => $amount,
                 'installments' => 1,
@@ -242,7 +242,7 @@ function tunapayment_capture($params)
                         'documentType' => 'CPF',
                     ),
                 ),
-            )
+            ),
         ],
     );
 
@@ -278,17 +278,17 @@ function tunapayment_capture($params)
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
+    $init_response = curl_exec($ch);
     curl_close($ch);
 
-    $data = json_decode($response);
+    $data = json_decode($init_response);
 
-    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $init_response, $data, $postheader);
 
     // perform API call to capture payment and interpret result
 
-    if ($data->code) {
-        if ($data->status) {
+    if ($data->code==1) {
+        if ($data->status==1) {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
@@ -297,7 +297,7 @@ function tunapayment_capture($params)
                 // Unique Transaction ID for the capture transaction
                 'transid' => $data->operationId,
                 // Return only if the token has updated or changed
-                'gatewayid' => $response['token'],
+                'gatewayid' => $data->token,
             ];
         } else {
             $returnData = [
@@ -522,8 +522,8 @@ function tunapayment_refund($params)
 
     // perform API call to initiate refund and interpret result
 
-    if ($data->code) {
-        if ($data->status) {
+    if ($data->code==1) {
+        if ($data->status==1) {
             return array(
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
