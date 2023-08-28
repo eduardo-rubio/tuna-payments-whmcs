@@ -132,8 +132,8 @@ function tunapayment_token(
     $card = array(
         'cardNumber' => strval($cardNumber),
         'cardHolderName' => $cardHolderName,
-        'expirationMonth' => $expirationMonth,
-        'expirationYear' => $expirationYear,
+        'expirationMonth' => intval($expirationMonth),
+        'expirationYear' => intval($expirationYear),
         'singleUse' => $singleUse,
         'cVV' => strval($cvv),
     );

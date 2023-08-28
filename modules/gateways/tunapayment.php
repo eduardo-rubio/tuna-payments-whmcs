@@ -232,8 +232,8 @@ function tunapayment_capture($params)
                     'token' => $remoteGatewayToken,
                     'tokenProvider' => 'Tuna',
                     'cardHolderName' => $fullname,
-                    'expirationMonth' => $expirationMonth,
-                    'expirationYear' => $expirationYear,
+                    'expirationMonth' => intval($expirationMonth),
+                    'expirationYear' => intval($expirationYear),
                     'brandName' => $cardType,
                     'tokenSingleUse' => 0,
                     'saveCard' => false,
@@ -249,8 +249,8 @@ function tunapayment_capture($params)
     $card = array(
         'cardHolderName' => $fullname,
         'cardNumber' => $cardIssueNumber,
-        'expirationMonth' => $expirationMonth,
-        'expirationYear' => $expirationYear,
+        'expirationMonth' => intval($expirationMonth),
+        'expirationYear' => intval($expirationYear),
         'cvv' => $cardCvv,
         'singleUse' => true,
     );
