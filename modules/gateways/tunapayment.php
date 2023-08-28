@@ -235,7 +235,7 @@ function tunapayment_capture($params)
                     'expirationMonth' => intval($expirationMonth),
                     'expirationYear' => intval($expirationYear),
                     'brandName' => $cardType,
-                    'tokenSingleUse' => 0,
+                    'tokenSingleUse' => 1,
                     'saveCard' => false,
                     'billingInfo' => array(
                         'document' => '744.479.870-23',
