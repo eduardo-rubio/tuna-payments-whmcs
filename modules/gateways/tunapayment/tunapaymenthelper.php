@@ -69,14 +69,20 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
 
     logModuleCall("Tuna Payment", "tunapayment_session", json_encode($postfields), $session_response, $session_data, $postheader);
 
-    $global_id = $id;
-    $global_email = $email;
-    $global_sessionId = $session_data->sessionId;
-
+    if ($session_data->code) {
+        $global_id = $id;
+        $global_email = $email;
+        $global_sessionId = $session_data->sessionId;
+        return [
+            'success' => true,
+            'session' => $global_sessionId,
+        ];
+    }
+    ;
     return [
-        'success' => true,
-        'session' => $global_sessionId,
+        'success' => false,
     ];
+
 }
 
 /**
@@ -146,24 +152,20 @@ function tunapayment_token(
     $errno = 200;
 
     $token_response = curl_exec($ch);
+    curl_close($ch);
     $token_data = json_decode($token_response);
 
     logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, $token_data, $postheader);
 
-    if (curl_error($ch)) {
-        $errno = curl_errno($ch);
-        $response = [
-            'success' => false,
-            'token' => '',
-        ];
-
-    } else {
-        $response = [
+    if ($token_data->code) {
+        return [
             'success' => true,
             'token' => $token_data->token,
         ];
     }
-    curl_close($ch);
-
-    return $response;
+    ;
+    return [
+        'success' => false,
+        'token' => '',
+    ];
 }

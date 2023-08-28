@@ -287,8 +287,8 @@ function tunapayment_capture($params)
 
     // perform API call to capture payment and interpret result
 
-    if ($data->code == 1) {
-        if ($data->status == 1) {
+    if ($data->code) {
+        if ($data->status) {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
@@ -309,7 +309,6 @@ function tunapayment_capture($params)
                 'rawdata' => $data,
             ];
         }
-
     } else {
         $returnData = [
             'status' => 'error',
@@ -524,7 +523,7 @@ function tunapayment_refund($params)
     // perform API call to initiate refund and interpret result
 
     if ($data->code) {
-        if ($data->status == 1) {
+        if ($data->status) {
             return array(
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
