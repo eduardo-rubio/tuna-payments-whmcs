@@ -287,24 +287,32 @@ function tunapayment_capture($params)
 
     // perform API call to capture payment and interpret result
 
-    if ($data->status == 1) {
-        $returnData = [
-            // 'success' if successful, otherwise 'declined', 'error' for failure
-            'status' => 'success',
-            // Data to be recorded in the gateway log - can be a string or array
-            'rawdata' => $data,
-            // Unique Transaction ID for the capture transaction
-            'transid' => $data->operationId,
-            // Return only if the token has updated or changed
-            'gatewayid' => $response['token'],
-        ];
+    if ($data->code == 1) {
+        if ($data->status == 1) {
+            $returnData = [
+                // 'success' if successful, otherwise 'declined', 'error' for failure
+                'status' => 'success',
+                // Data to be recorded in the gateway log - can be a string or array
+                'rawdata' => $data,
+                // Unique Transaction ID for the capture transaction
+                'transid' => $data->operationId,
+                // Return only if the token has updated or changed
+                'gatewayid' => $response['token'],
+            ];
+        } else {
+            $returnData = [
+                // 'success' if successful, otherwise 'declined', 'error' for failure
+                'status' => 'declined',
+                // When not successful, a specific decline reason can be logged in the Transaction History
+                'declinereason' => 'Credit card declined. Please contact issuer.',
+                // Data to be recorded in the gateway log - can be a string or array
+                'rawdata' => $data,
+            ];
+        }
+
     } else {
         $returnData = [
-            // 'success' if successful, otherwise 'declined', 'error' for failure
-            'status' => 'declined',
-            // When not successful, a specific decline reason can be logged in the Transaction History
-            'declinereason' => 'Credit card declined. Please contact issuer.',
-            // Data to be recorded in the gateway log - can be a string or array
+            'status' => 'error',
             'rawdata' => $data,
         ];
     }
