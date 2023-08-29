@@ -201,7 +201,7 @@ function tunapayment_capture($params)
     $paymentItems = array(
         'items' => [
             array(
-                'amount' => $amount,
+                'amount' => floatval($amount),
                 'detailUniqueId' => $invoiceId,
                 'productDescription' => $description,
                 'itemQuantity' => 1,
@@ -222,11 +222,11 @@ function tunapayment_capture($params)
 
     $countryCode = $country;
 
-    $paymentData = array (
+    $paymentData = array(
         'paymentMethods' => [
-            array (
+            array(
                 'paymentMethodType' => '1',
-                'amount' => $amount,
+                'amount' => floatval($amount),
                 'installments' => 1,
                 'cardInfo' => array(
                     'token' => $remoteGatewayToken,
@@ -235,15 +235,18 @@ function tunapayment_capture($params)
                     'expirationMonth' => intval($expirationMonth),
                     'expirationYear' => intval($expirationYear),
                     'brandName' => $cardType,
-                    'tokenSingleUse' => 1,
+                    'tokenSingleUse' => 0,
                     'saveCard' => false,
                     'billingInfo' => array(
                         'document' => '744.479.870-23',
                         'documentType' => 'CPF',
                     ),
                 ),
+                "softDescriptor" => "Blymp",
             ),
         ],
+        "countrycode" => "BR",
+        "amount" => floatval($amount),
     );
 
     $card = array(
@@ -287,8 +290,8 @@ function tunapayment_capture($params)
 
     // perform API call to capture payment and interpret result
 
-    if ($data->code==1) {
-        if ($data->status==1) {
+    if ($data->code == 1) {
+        if ($data->status == 1) {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
@@ -491,14 +494,18 @@ function tunapayment_refund($params)
         'x-tuna-apptoken: ' . $tunaApptoken,
     );
 
-    $cardDetail = array(
-        'amount' => $refundAmount,
-        'methodId' => 0,
-        'Splits' => array(
-            'MerchantID' => '',
-            'Amount' => $refundAmount,
-        ),
-    );
+    $cardDetail = [
+        array(
+            'amount' => $refundAmount,
+            'methodId' => 0,
+            'Splits' => [
+                array(
+                    'MerchantID' => '',
+                    'Amount' => $refundAmount,
+                )
+            ],
+        )
+    ];
 
     $postfields = [
         'cardDetail' => $cardDetail,
@@ -511,19 +518,19 @@ function tunapayment_refund($params)
     curl_setopt($ch, CURLOPT_URL, $cancelUrl);
     curl_setopt($ch, CURLOPT_POST, true);
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
     $response = curl_exec($ch);
     curl_close($ch);
 
     $data = json_decode($response);
 
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields), $response, $data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
 
     // perform API call to initiate refund and interpret result
 
-    if ($data->code==1) {
-        if ($data->status==1) {
+    if ($data->code == 1) {
+        if ($data->status == 1) {
             return array(
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
