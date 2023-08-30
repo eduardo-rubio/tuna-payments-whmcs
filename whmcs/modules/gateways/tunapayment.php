@@ -305,7 +305,7 @@ function tunapayment_capture($params)
         } else {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
-                'status' => 'declined',
+                'status' => getStatusMessage($data->status),
                 // When not successful, a specific decline reason can be logged in the Transaction History
                 'declinereason' => 'Credit card declined. Please contact issuer.',
                 // Data to be recorded in the gateway log - can be a string or array

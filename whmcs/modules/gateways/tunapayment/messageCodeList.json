@@ -1,0 +1,150 @@
+{
+  "1": {
+    "message": "Successful Payment.",
+    "description": "The request has been successfully processed."
+  },
+  "-101": {
+    "message": "Request object is null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-102": {
+    "message": "Invalid Payment.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-103": {
+    "message": "Invalid Payment Items.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-104": {
+    "message": "At least one card must be present for the type of payment.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-105": {
+    "message": "Partner id cannot be null",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-106": {
+    "message": "Partner Unique id cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-107": {
+    "message": "Custom External Key s invalid.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-108": {
+    "message": "Partner Unique id already used.",
+    "description": "The request is repeated. It will not be processed."
+  },
+  "-109": {
+    "message": "Invalid Configuration.",
+    "description": "Configuration issue. Please check your account and look for callouts. <br></br>If you can't fix it, contact support and inform this code and data request."
+  },
+  "-110": {
+    "message": "CVV not valid.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-111": {
+    "message": "Partner Token was not provided.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-112": {
+    "message": "Invalid Partner.",
+    "description": "Configuration issue. Please check your credentials."
+  },
+  "-113": {
+    "message": "Invalid Partner Credentials.",
+    "description": "Configuration issue. Please check your credentials."
+  },
+  "-114": {
+    "message": "Invalid Partner Account.",
+    "description": "Configuration issue. Please check your credentials."
+  },
+  "-115": {
+    "message": "Cancel operation failed.",
+    "description": "Contact support and inform this code and data request."
+  },
+  "-116": {
+    "message": "Capture operation failed.",
+    "description": "Contact support and inform this code and data request."
+  },
+  "-117": {
+    "message": "Configuration error.",
+    "description": "Configuration issue. Please check your account and look for callouts. <br></br>If you can't fix it, contact support and inform this code and data request."
+  },
+  "-118": {
+    "message": "Order Identifier can not be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-119": {
+    "message": "Operation failed.",
+    "description": "Contact support and inform this code and data request."
+  },
+  "-120": {
+    "message": "Invalid amount.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-121": {
+    "message": "Unexpected error.",
+    "description": "Contact support and inform this code and data request."
+  },
+  "-122": {
+    "message": "Merchant does not exist.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-123": {
+    "message": "Merchant Percentage and amount, both cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-124": {
+    "message": "Merchant External Id cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-125": {
+    "message": "Merchant Name cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-126": {
+    "message": "Merchant Fantasy Name cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-127": {
+    "message": "Merchant Status cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-128": {
+    "message": "Merchant status is invalid. Should be '1' for Active, '2' for Inactive, or '3' for Suspended.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-129": {
+    "message": "Merchant Name cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-130": {
+    "message": "Agency of bank account cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-131": {
+    "message": "Bank Account number cannot be null.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-132": {
+    "message": "Bank account type is invalid. Valid values are 'C' for Checking, 'S' for Saving, 'P' for Payment, or 'D' for Deposit.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-133": {
+    "message": "Date filters are invalid.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-134": {
+    "message": "Merchant Percentage invalid.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-135": {
+    "message": "Merchant amount invalid.",
+    "description": "Malformed request. Please check the message and fix it."
+  },
+  "-136": {
+    "message": "Merchant shipping amount invalid",
+    "description": "Malformed request. Please check the message and fix it."
+  }
+}

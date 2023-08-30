@@ -6,6 +6,10 @@ $global_id = 0;
 $global_email = '';
 $global_sessionId = 0;
 
+$global_code_status = json_decode(file("/messageCodeList.json"));
+$global_payment_status = json_decode(file("/paymentMethodStatus.json"));
+
+
 /**
  *
  * @param string $tunaAccount
@@ -168,4 +172,21 @@ function tunapayment_token(
         'success' => false,
         'token' => '',
     ];
+}
+
+function getStatusMessage($statusNumber) {
+
+    global $global_payment_status;
+
+    $message = array_filter($global_payment_status[$statusNumber], function($status) {
+        return $status['status'];
+    });
+}
+function getCodeMessage($codeNumber) {
+
+    global $global_code_status;
+
+    $message = array_filter($global_code_status[$codeNumber], function($message) {
+        return $message['message'];
+    });
 }
