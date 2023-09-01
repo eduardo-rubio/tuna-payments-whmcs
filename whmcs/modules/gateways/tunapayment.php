@@ -201,7 +201,7 @@ function tunapayment_capture($params)
     $paymentItems = array(
         'items' => [
             array(
-                'amount' => floatval($amount),
+                'amount' => round(floatval($amount), 2),
                 'detailUniqueId' => $invoiceId,
                 'productDescription' => $description,
                 'itemQuantity' => 1,
@@ -226,7 +226,7 @@ function tunapayment_capture($params)
         'paymentMethods' => [
             array(
                 'paymentMethodType' => '1',
-                'amount' => floatval($amount),
+                'amount' => round(floatval($amount), 2),
                 'installments' => 1,
                 'cardInfo' => array(
                     'token' => $remoteGatewayToken,
@@ -246,7 +246,7 @@ function tunapayment_capture($params)
             ),
         ],
         "countrycode" => "BR",
-        "amount" => floatval($amount),
+        "amount" => round(floatval($amount), 2),
     );
 
     $card = array(
