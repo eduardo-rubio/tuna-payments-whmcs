@@ -85,6 +85,8 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
     ;
     return [
         'success' => false,
+        'code' => $session_data->code
+
     ];
 
 }
@@ -95,17 +97,139 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
  * @param string $tunaApptoken
  * @param string $testMode
  * @param string $sessionId
- * @param string $cardHolderName
- * @param string $cardNumber
- * @param string $expirationMonth
- * @param string $expirationYear
+ * @param string $cardToken
  * @param string $cvv
- * @param string $singleUse
  *
  * @return array token response status
  */
 
-function tunapayment_token(
+ function tunapayment_bind_token(
+    $tunaAccount,
+    $tunaApptoken,
+    $testMode,
+    $sessionId,
+    $cardToken,
+    $cvv
+) {
+
+    $tokenUrl = 'https://token.tunagateway.com/api/Token/Bind';
+
+    if ($testMode == 'yes') {
+        $tokenUrl = 'https://token.tuna-demo.uy/api/Token/Bind';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+
+    $postheader = array(
+        'accept: application/json',
+        'Content-Type: application/json',
+        'x-tuna-account: ' . $tunaAccount,
+        'x-tuna-apptoken: ' . $tunaApptoken,
+    );
+
+    $postfields = array(
+        'token' => $cardToken,
+        'cVV' => strval($cvv),
+        'sessionId' => $sessionId,
+    );
+
+    $ch = curl_init($tokenUrl);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $errno = 200;
+
+    $bind_response = curl_exec($ch);
+    curl_close($ch);
+    $bind_data = json_decode($bind_response);
+
+    logModuleCall("Tuna Payment", "tunapayment_bind_token", json_encode($postfields), $bind_response, $bind_data, $postheader);
+
+    if ($bind_data->code == 1) {
+        return [
+            'success' => true,
+            'token' => $bind_data->token,
+        ];
+    }
+    ;
+    return [
+        'success' => false,
+        'token' => '',
+        'code' => $bind_data->code
+    ];
+}
+/**
+ *
+ * @param string $tunaAccount
+ * @param string $tunaApptoken
+ * @param string $testMode
+ * @param string $sessionId
+ * @param string $cardToken
+ *
+ * @return array token response status
+ */
+
+ function tunapayment_delete_token(
+    $tunaAccount,
+    $tunaApptoken,
+    $testMode,
+    $sessionId,
+    $cardToken
+) {
+
+    $tokenUrl = 'https://token.tunagateway.com/api/Token/Delete';
+
+    if ($testMode == 'yes') {
+        $tokenUrl = 'https://token.tuna-demo.uy/api/Token/Delete';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+
+    $postheader = array(
+        'accept: application/json',
+        'Content-Type: application/json',
+        'x-tuna-account: ' . $tunaAccount,
+        'x-tuna-apptoken: ' . $tunaApptoken,
+    );
+
+    $postfields = array(
+        'token' => $cardToken,
+        'sessionId' => $sessionId,
+    );
+
+    $ch = curl_init($tokenUrl);
+
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+
+    $errno = 200;
+
+    $delete_response = curl_exec($ch);
+    curl_close($ch);
+    $delete_data = json_decode($delete_response);
+
+    logModuleCall("Tuna Payment", "tunapayment_delete_token", json_encode($postfields), $delete_response, $delete_data, $postheader);
+
+    if ($delete_data->code == 1) {
+        return [
+            'success' => true,
+            'token' => $delete_data->token,
+        ];
+    }
+    ;
+    return [
+        'success' => false,
+        'token' => '',
+        'code' => $delete_data->code
+    ];
+}
+
+function tunapayment_generate_token(
     $tunaAccount,
     $tunaApptoken,
     $testMode,
@@ -159,7 +283,7 @@ function tunapayment_token(
     curl_close($ch);
     $token_data = json_decode($token_response);
 
-    logModuleCall("Tuna Payment", "tunapayment_token", json_encode($postfields), $token_response, $token_data, $postheader);
+    logModuleCall("Tuna Payment", "tunapayment_generate_token", json_encode($postfields), $token_response, $token_data, $postheader);
 
     if ($token_data->code == 1) {
         return [
@@ -171,22 +295,26 @@ function tunapayment_token(
     return [
         'success' => false,
         'token' => '',
+        'code' => $token_data->code
     ];
 }
 
-function getStatusMessage($statusNumber) {
+
+function getStatusMessage($statusNumber)
+{
 
     global $global_payment_status;
 
-    $message = array_filter($global_payment_status[$statusNumber], function($status) {
+    $message = array_filter($global_payment_status[$statusNumber], function ($status) {
         return $status['status'];
     });
 }
-function getCodeMessage($codeNumber) {
+function getCodeMessage($codeNumber)
+{
 
     global $global_code_status;
 
-    $message = array_filter($global_code_status[$codeNumber], function($message) {
+    $message = array_filter($global_code_status[$codeNumber], function ($message) {
         return $message['message'];
     });
 }
