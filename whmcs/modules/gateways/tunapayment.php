@@ -245,6 +245,7 @@ function tunapayment_capture($params)
                 "softDescriptor" => "Blymp",
             ),
         ],
+        'deliveryAddress' => $deliveryAddress,
         "countrycode" => "BR",
         "amount" => round(floatval($amount), 2),
     );
@@ -270,9 +271,7 @@ function tunapayment_capture($params)
         'partnerUniqueId' => $partnerUniqueId,
         'customer' => $customer,
         'paymentItems' => $paymentItems,
-        'paymentData' => $paymentData,
-        'deliveryAddress' => $deliveryAddress,
-        'countryCode' => $countryCode,
+        'paymentData' => $paymentData
     ];
 
     $ch = curl_init();

@@ -6,8 +6,8 @@ $global_id = 0;
 $global_email = '';
 $global_sessionId = 0;
 
-$global_code_status = json_decode(file("/messageCodeList.json"));
-$global_payment_status = json_decode(file("/paymentMethodStatus.json"));
+$global_code_status = json_decode(file_get_contents(__DIR__ . '/messageCodeList.json'), true);
+$global_payment_status = json_decode(file_get_contents(__DIR__ . '/paymentMethodStatus.json'), true);
 
 
 /**
@@ -306,7 +306,7 @@ function getStatusMessage($statusNumber)
     global $global_payment_status;
 
     $message = array_filter($global_payment_status[$statusNumber], function ($status) {
-        return $status['status'];
+        return $status;
     });
 }
 function getCodeMessage($codeNumber)
@@ -315,6 +315,6 @@ function getCodeMessage($codeNumber)
     global $global_code_status;
 
     $message = array_filter($global_code_status[$codeNumber], function ($message) {
-        return $message['message'];
+        return $message;
     });
 }
