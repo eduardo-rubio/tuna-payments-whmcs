@@ -6,8 +6,8 @@ $global_id = 0;
 $global_email = '';
 $global_sessionId = 0;
 
-$global_code_status = json_decode(file_get_contents(__DIR__ . '/messageCodeList.json'), true);
-$global_payment_status = json_decode(file_get_contents(__DIR__ . '/paymentMethodStatus.json'), true);
+$global_code_status = json_decode(file_get_contents(__DIR__ . "/messageCodeList.json"), true);
+$global_payment_status = json_decode(file_get_contents(__DIR__ . "/paymentMethodStatus.json"), true);
 
 
 /**
@@ -103,7 +103,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
  * @return array token response status
  */
 
- function tunapayment_bind_token(
+function tunapayment_bind_token(
     $tunaAccount,
     $tunaApptoken,
     $testMode,
@@ -172,7 +172,7 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
  * @return array token response status
  */
 
- function tunapayment_delete_token(
+function tunapayment_delete_token(
     $tunaAccount,
     $tunaApptoken,
     $testMode,
@@ -305,7 +305,11 @@ function getStatusMessage($statusNumber)
 
     global $global_payment_status;
 
-    $message = array_filter($global_payment_status[$statusNumber], function ($status) {
+    $status = $global_payment_status[$statusNumber];
+    if (is_null($status)) {
+        return "INVALID STATUS #" . $statusNumber;
+    }
+    $msg = array_filter($global_payment_status[$statusNumber], function ($status) {
         return $status;
     });
 }
@@ -314,7 +318,12 @@ function getCodeMessage($codeNumber)
 
     global $global_code_status;
 
-    $message = array_filter($global_code_status[$codeNumber], function ($message) {
+    $code = $global_code_status[$codeNumber];
+
+    if (is_null($code)) {
+        return "INVALID CODE #" . $codeNumber;
+    }
+    $msg = array_filter($code, function ($message) {
         return $message;
     });
 }
