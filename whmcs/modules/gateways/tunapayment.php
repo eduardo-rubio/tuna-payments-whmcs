@@ -10,7 +10,7 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-$tunapayment_Description = "Tuna";
+$tunapayment_Description = "Tuna CreditCard";
 $tunapayment_Version = "1.0.0";
 
 /**
