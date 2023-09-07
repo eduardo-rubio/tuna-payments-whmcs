@@ -288,6 +288,14 @@ function tunapayment_capture($params)
     logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $init_response, $data, $postheader);
 
     // perform API call to capture payment and interpret result
+    // https://developers.whmcs.com/payment-gateways/tokenised-remote-storage/
+    //  Parameter   Type	    Description
+    //  status	    string	    One of either success, pending, declined
+    //  declinereason	string	The reason for a decline
+    //  transid	    string	    The Transaction ID returned by the payment gateway
+    //  fee	        float	    The transaction fee returned by the payment gateway
+    //  rawdata	    string or array	The raw data returned by the payment gateway for logging to the gateway log to aid in debugging
+    //  gatewayid	string	    The token returned by the payment gateway
 
     if ($data->code == 1) {
         if ($data->status == 1) {
