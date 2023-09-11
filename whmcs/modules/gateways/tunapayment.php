@@ -189,7 +189,6 @@ function tunapayment_capture($params)
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
-    $partnerUniqueId = $invoiceId;
     $customer = array(
         'id' => strval($userid),
         'email' => $email,
@@ -268,7 +267,7 @@ function tunapayment_capture($params)
 
     $postfields = [
         'tokenSession' => $sessionId,
-        'partnerUniqueId' => $partnerUniqueId,
+        'partnerUniqueId' => $invoiceId,
         'customer' => $customer,
         'paymentItems' => $paymentItems,
         'paymentData' => $paymentData
@@ -298,7 +297,8 @@ function tunapayment_capture($params)
     //  gatewayid	string	    The token returned by the payment gateway
 
     if ($data->code == 1) {
-        if ($data->status == 1) {
+        // 2	Captured	The payment transaction has been captured, so the funds are secured.
+        if ($data->status == 2) {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
@@ -480,8 +480,6 @@ function tunapayment_refund($params)
         $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
     }
 
-    $partnerUniqueId = $invoiceId;
-
     $postheader = array(
         'accept: application/json',
         'Content-Type: application/json',
@@ -504,8 +502,8 @@ function tunapayment_refund($params)
 
     $postfields = [
         'cardDetail' => $cardDetail,
-        'paymentKey' => '',
-        'partnerUniqueId' => $partnerUniqueId,
+        'paymentKey' => $transactionIdToRefund,
+        'partnerUniqueId' => $invoiceId,
         'paymentDay' => '',
     ];
 
