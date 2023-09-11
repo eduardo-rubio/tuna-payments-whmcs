@@ -193,7 +193,7 @@ function tunapayment_capture($params)
         'id' => strval($userid),
         'email' => $email,
         'document' => strval($taxid),
-        'documentType' => 'TAXID',
+        'documentType' => 'TAX',
         'name' => $fullname,
     );
 

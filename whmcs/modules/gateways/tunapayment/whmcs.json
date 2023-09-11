@@ -7,7 +7,7 @@
     "description": {
         "name": "Tuna Payment Gateway Module",
         "tagline": "Payment Gateway modules allow you to integrate payment solutions with the WHMCS platform.",
-        "long": "The Tuna files here are a Merchant Payment Gateway module for WHMCS be structured and implemented.",
+        "long": "The Tuna files here are a Payment Gateway module for WHMCS be structured and implemented.",
         "features": [
             "Provide both client and admin facing user interfaces",
             "Utilize hook functionality within WHMCS"
