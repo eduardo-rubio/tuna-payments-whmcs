@@ -138,7 +138,7 @@ function tunapayment_capture($params)
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
     $userid = $params['clientdetails']['id'];
-    $fullname = $params['clientdetails']['fullname'];
+    $fullname = getFullName($params['clientdetails']['fullname']);
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -369,7 +369,7 @@ function tunapayment_storeremote($params)
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
     $userid = $params['clientdetails']['id'];
-    $fullname = $params['clientdetails']['fullname'];
+    $fullname = getFullName($params['clientdetails']['fullname']);
 
     $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     if ($session_response['success']) {

@@ -327,3 +327,28 @@ function getCodeMessage($codeNumber)
         return $message;
     });
 }
+
+function getFullName($fullname) {
+    if (str_starts_with($fullname, "Authorized")) {
+        return "Authorized";
+    }
+    if (str_starts_with($fullname, "Captured")) {
+        return "Captured";
+    }
+    if (str_starts_with($fullname, "Not Authorized")) {
+        return "Not Authorized";
+    }
+    if (str_starts_with($fullname, "Error")) {
+        return "Error";
+    }
+    if (str_starts_with($fullname, "Invalid")) {
+        return "Invalid";
+    }
+    if (str_starts_with($fullname, "Pending")) {
+        return "Pending";
+    }
+    if (str_starts_with($fullname, "Expired")) {
+        return "Expired";
+    }
+    return $fullname;
+}
