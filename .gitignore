@@ -1,6 +1,6 @@
 .vscode
 
 # Composer
-composer.phar
-composer.lock
-vendor/*
+**/composer.phar
+**/composer.lock
+**/vendor/*

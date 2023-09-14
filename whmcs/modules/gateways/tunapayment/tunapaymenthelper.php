@@ -8,6 +8,7 @@ $global_sessionId = 0;
 
 $global_code_status = json_decode(file_get_contents(__DIR__ . "/messageCodeList.json"), true);
 $global_payment_status = json_decode(file_get_contents(__DIR__ . "/paymentMethodStatus.json"), true);
+$global_code2_country = json_decode(file_get_contents(__DIR__ . "/iso2.json"), true);
 
 
 /**
@@ -351,4 +352,10 @@ function getFullName($fullname) {
         return "Expired";
     }
     return $fullname;
+}
+
+function getCode2($code3) {
+    global $global_code2_country;
+
+    return $global_code2_country[$code3];
 }

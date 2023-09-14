@@ -112,6 +112,8 @@ function tunapayment_capture($params)
     $amount = $params['amount'];
     $currencyCode = $params['currency'];
 
+    $currencyCode2=getCode2($currencyCode);
+
     // Credit Card Parameters
     $remoteGatewayToken = $params['gatewayid'];
 
@@ -245,7 +247,7 @@ function tunapayment_capture($params)
             ),
         ],
         'deliveryAddress' => $deliveryAddress,
-        "countrycode" => "BR",
+        "countrycode" => $currencyCode2,
         "amount" => $amount,
     );
 
