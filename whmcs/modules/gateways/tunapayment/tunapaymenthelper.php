@@ -82,14 +82,12 @@ function tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $id, $email
             'success' => true,
             'session' => $global_sessionId,
         ];
-    }
-    ;
+    };
     return [
         'success' => false,
         'code' => $session_data->code
 
     ];
-
 }
 
 /**
@@ -154,8 +152,7 @@ function tunapayment_bind_token(
             'success' => true,
             'token' => $bind_data->token,
         ];
-    }
-    ;
+    };
     return [
         'success' => false,
         'token' => '',
@@ -221,8 +218,7 @@ function tunapayment_delete_token(
             'success' => true,
             'token' => $delete_data->token,
         ];
-    }
-    ;
+    };
     return [
         'success' => false,
         'token' => '',
@@ -230,6 +226,21 @@ function tunapayment_delete_token(
     ];
 }
 
+/**
+ * tunapayment_generate_token
+ *   @param string $tunaAccount,
+ *   @param string $tunaApptoken,
+ *   @param string $testMode,
+ *   @param string $sessionId,
+ *   @param string $cardHolderName,
+ *   @param string $cardNumber,
+ *   @param string $expirationMonth,
+ *   @param string $expirationYear,
+ *   @param string $cvv,
+ *   @param string $singleUse
+ *
+ * @return void
+ */
 function tunapayment_generate_token(
     $tunaAccount,
     $tunaApptoken,
@@ -291,8 +302,7 @@ function tunapayment_generate_token(
             'success' => true,
             'token' => $token_data->token,
         ];
-    }
-    ;
+    };
     return [
         'success' => false,
         'token' => '',
@@ -301,6 +311,12 @@ function tunapayment_generate_token(
 }
 
 
+/**
+ * getStatusMessage
+ *
+ * @param  mixed $statusNumber
+ * @return void
+ */
 function getStatusMessage($statusNumber)
 {
 
@@ -314,6 +330,12 @@ function getStatusMessage($statusNumber)
         return $status;
     });
 }
+/**
+ * getCodeMessage
+ *
+ * @param  mixed $codeNumber
+ * @return void
+ */
 function getCodeMessage($codeNumber)
 {
 
@@ -329,7 +351,14 @@ function getCodeMessage($codeNumber)
     });
 }
 
-function getFullName($fullname) {
+/**
+ * getFullName
+ *
+ * @param  mixed $fullname
+ * @return void
+ */
+function getFullName($fullname)
+{
     if (str_starts_with($fullname, "Authorized")) {
         return "Authorized";
     }
@@ -354,7 +383,14 @@ function getFullName($fullname) {
     return $fullname;
 }
 
-function getCode2($code3) {
+/**
+ * getCode2
+ *
+ * @param  mixed $code3
+ * @return void
+ */
+function getCode2($code3)
+{
     global $global_code2_country;
 
     return $global_code2_country[$code3];
