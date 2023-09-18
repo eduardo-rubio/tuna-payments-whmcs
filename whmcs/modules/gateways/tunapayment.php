@@ -112,8 +112,6 @@ function tunapayment_capture($params)
     $amount = $params['amount'];
     $currencyCode = $params['currency'];
 
-    $currencyCode2=getCode2($currencyCode);
-
     // Credit Card Parameters
     $remoteGatewayToken = $params['gatewayid'];
 
@@ -150,6 +148,10 @@ function tunapayment_capture($params)
     $moduleDisplayName = $params['name'];
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
+
+    // Custom Fields
+    $documenttype = $params['customfield']['documenttype'];
+    $documentnumber = $params['customfield']['documentnumber'];
 
     $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     if ($session_response['success']) {
@@ -239,15 +241,15 @@ function tunapayment_capture($params)
                     'tokenSingleUse' => 0,
                     'saveCard' => false,
                     'billingInfo' => array(
-                        'document' => '744.479.870-23',
-                        'documentType' => 'CPF',
+                        'document' => $documentnumber,
+                        'documentType' => $documenttype,
                     ),
                 ),
                 "softDescriptor" => "Blymp",
             ),
         ],
         'deliveryAddress' => $deliveryAddress,
-        "countrycode" => $currencyCode2,
+        "countrycode" => $countryCode,
         "amount" => $amount,
     );
 

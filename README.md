@@ -16,5 +16,12 @@ platform.
 | transid           | operationId o paymentKey? |
 | gatewayid         | token / cardInfo.token |
 
+Configure Custom Fields
+
+https://docs.whmcs.com/Custom_Fields
+
+![](doc/WHMCSCustomFields.png)
+![](doc/WHMCSCustomFieldsInput.png)
+
 
 ![Tuna!](whmcs/modules/gateways/tunapayment/tuna.png)
