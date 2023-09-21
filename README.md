@@ -13,7 +13,7 @@ platform.
 | "Blymp"           | softDescriptor |
 | cardissuenum      | cardNumber |
 | invoiceid         | partnerUniqueId |
-| transid           | operationId o paymentKey? |
+| transid           | paymentKey |
 | gatewayid         | token / cardInfo.token |
 
 Configure Custom Fields

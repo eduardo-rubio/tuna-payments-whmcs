@@ -309,7 +309,7 @@ function tunapayment_capture($params)
                 // Data to be recorded in the gateway log - can be a string or array
                 'rawdata' => $data,
                 // Unique Transaction ID for the capture transaction
-                'transid' => $data->operationId,
+                'transid' => $data->paymentKey,
                 // Return only if the token has updated or changed
                 'gatewayid' => $data->token,
             ];
