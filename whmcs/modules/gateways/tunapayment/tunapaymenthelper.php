@@ -9,6 +9,7 @@ $global_sessionId = 0;
 $global_code_status = json_decode(file_get_contents(__DIR__ . "/messageCodeList.json"), true);
 $global_payment_status = json_decode(file_get_contents(__DIR__ . "/paymentMethodStatus.json"), true);
 $global_code2_country = json_decode(file_get_contents(__DIR__ . "/iso2.json"), true);
+$global_code2_currency = json_decode(file_get_contents(__DIR__ . "/currency.json"), true);
 
 
 /**
@@ -394,4 +395,17 @@ function getCode2($code3)
     global $global_code2_country;
 
     return $global_code2_country[$code3];
+}
+
+/**
+ * getCode2
+ *
+ * @param  mixed $code3
+ * @return void
+ */
+function getCurrency2($code3)
+{
+    global $global_code2_currency;
+
+    return $global_code2_currency[$code3];
 }

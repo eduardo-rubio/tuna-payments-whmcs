@@ -110,7 +110,7 @@ function tunapayment_capture($params)
     $invoiceId = $params['invoiceid'];
     $description = $params["description"];
     $amount = $params['amount'];
-    $currencyCode = $params['currency'];
+    $currencyCode = getCurrency2($params['currency']);
 
     // Credit Card Parameters
     $remoteGatewayToken = $params['gatewayid'];
@@ -223,7 +223,11 @@ function tunapayment_capture($params)
         'country' => $country,
     );
 
-    $countryCode = $country;
+    // $countryCode = $country;
+    if (is_null($currencyCode)) {
+        $currencyCode=$country;
+    }
+
 
     $paymentData = array(
         'paymentMethods' => [
@@ -249,7 +253,7 @@ function tunapayment_capture($params)
             ),
         ],
         'deliveryAddress' => $deliveryAddress,
-        "countrycode" => $countryCode,
+        "countrycode" => $currencyCode,
         "amount" => $amount,
     );
 
@@ -527,7 +531,7 @@ function tunapayment_refund($params)
     // perform API call to initiate refund and interpret result
 
     if ($data->code == 1) {
-        if ($data->status == 1) {
+        if ($data->status == 3) {
             return array(
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
