@@ -315,7 +315,7 @@ function tunapayment_capture($params)
                 // Unique Transaction ID for the capture transaction
                 'transid' => $data->paymentKey,
                 // Return only if the token has updated or changed
-                'gatewayid' => $data->token,
+                // 'gatewayid' => $data->token,
             ];
         } else {
             $returnData = [

@@ -240,7 +240,7 @@ function tunapayment_delete_token(
  *   @param string $cvv,
  *   @param string $singleUse
  *
- * @return void
+ * @return array
  */
 function tunapayment_generate_token(
     $tunaAccount,
@@ -315,8 +315,8 @@ function tunapayment_generate_token(
 /**
  * getStatusMessage
  *
- * @param  mixed $statusNumber
- * @return void
+ * @param  string $statusNumber
+ * @return string
  */
 function getStatusMessage($statusNumber)
 {
@@ -330,12 +330,13 @@ function getStatusMessage($statusNumber)
     $msg = array_filter($global_payment_status[$statusNumber], function ($status) {
         return $status;
     });
+    return "Error";
 }
 /**
  * getCodeMessage
  *
- * @param  mixed $codeNumber
- * @return void
+ * @param  string $codeNumber
+ * @return string
  */
 function getCodeMessage($codeNumber)
 {
@@ -350,13 +351,14 @@ function getCodeMessage($codeNumber)
     $msg = array_filter($code, function ($message) {
         return $message;
     });
+    return "Error";
 }
 
 /**
  * getFullName
  *
- * @param  mixed $fullname
- * @return void
+ * @param  string $fullname
+ * @return string
  */
 function getFullName($fullname)
 {
@@ -387,8 +389,8 @@ function getFullName($fullname)
 /**
  * getCode2
  *
- * @param  mixed $code3
- * @return void
+ * @param  string $code3
+ * @return string
  */
 function getCode2($code3)
 {
@@ -400,8 +402,8 @@ function getCode2($code3)
 /**
  * getCode2
  *
- * @param  mixed $code3
- * @return void
+ * @param  string $code3
+ * @return string
  */
 function getCurrency2($code3)
 {
