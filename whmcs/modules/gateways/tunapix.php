@@ -11,7 +11,7 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
-$tunapix_Description = "Tuna Others";
+$tunapix_Description = "Tuna Pix";
 $tunapix_Version = "1.0.0";
 
 /**
@@ -29,7 +29,7 @@ function tunapix_MetaData()
     global $tunapix_Description;
 
     return array(
-        'DisplayName' => 'Tuna Payment Gateway Module 2',
+        'DisplayName' => 'Tuna Payment Gateway Module Pix',
         // Use API Version 1.1
         'APIVersion' => '1.1',
         // You can utilise custom templates here
@@ -55,7 +55,7 @@ function tunapix_config()
         // defined here for backwards compatibility
         'FriendlyName' => array(
             'Type' => 'System',
-            'Value' => 'Tuna Payment Gateway 2 Module',
+            'Value' => 'Tuna Payment Gateway Module Pix',
         ),
         // "x-tuna-account": "demo"
         'tunaAccount' => array(

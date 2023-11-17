@@ -1,13 +1,13 @@
 {
     "schema": "1.0",
     "type": "whmcs-gateways",
-    "name": "tuna-payment-2",
+    "name": "tuna-pix",
     "license": "MIT",
     "category": "gateway",
     "description": {
-        "name": "Tuna Payment Gateway Module 2",
+        "name": "Tuna Payment Gateway Module Pix",
         "tagline": "Payment Gateway modules allow you to integrate payment solutions with the WHMCS platform.",
-        "long": "The Tuna files here are a Payment Gateway module 2 for WHMCS be structured and implemented.",
+        "long": "The Tuna files here are a Payment Gateway module Pix for WHMCS be structured and implemented.",
         "features": [
             "Provide both client and admin facing user interfaces",
             "Utilize hook functionality within WHMCS"
