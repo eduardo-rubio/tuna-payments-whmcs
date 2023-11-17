@@ -29,15 +29,10 @@ function tunapayment2_MetaData()
     global $tunapayment2_Description;
 
     return array(
-        'DisplayName' => 'Tuna Payment Gateway Module',
+        'DisplayName' => 'Tuna Payment Gateway Module 2',
         // Use API Version 1.1
         'APIVersion' => '1.1',
         // You can utilise custom templates here
-        'failedEmail' => 'Credit Card Payment Failed',
-        'successEmail' => 'Custom Credit Card Payment Template',
-        'pendingEmail' => 'Custom Credit Card Pending Template',
-        'DisableLocalCreditCardInput' => false,
-        'TokenisedStorage' => true,
     );
 }
 
