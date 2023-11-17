@@ -35,14 +35,47 @@ if (!$gatewayParams['type']) {
 
 // Retrieve data returned in payment gateway callback
 // Varies per payment gateway
-$success = $_POST["x_status"];
-$invoiceId = $_POST["x_invoice_id"];
-$transactionId = $_POST["x_trans_id"];
-$paymentAmount = $_POST["x_amount"];
-$paymentFee = $_POST["x_fee"];
-$hash = $_POST["x_hash"];
 
-$transactionStatus = $success ? 'Success' : 'Failure';
+// https://dev.tuna.uy/api-guide/webhooks-notifications/
+// {
+//     "id": 21636,
+//     "paymentKey": "134641C000053BB",
+//     "partnerUniqueId": "22193",
+//     "statusId": "P",
+//     "amount": 65.97,
+//     "operationId": "O0002134641C000063D3",
+//     "methods": [
+//         {
+//             "methodType": "D",
+//             "status": "C",
+//             "methodId": 0,            
+//             "operationAmount": 65.97
+//         }
+//     ],
+//     "items": [
+//         {
+//             "paymentItemId": 0,
+//             "productID": 11,
+//             "productDescription": "Pizza",
+//             "amount": 21.990000,
+//             "quantity": 3,
+//             "categoryID": 0,
+//             "data": {
+//                 "ProductID": 11,
+//                 "CategoryID": 0                
+//             }
+//         }
+//     ]
+// }
+
+$success = $_POST["statusId"];
+$invoiceId = $_POST["partnerUniqueId"];
+$transactionId = $_POST["operationId"];
+$paymentAmount = $_POST["amount"];
+$paymentFee = 0;
+// $hash = $_POST["x_hash"];
+
+$transactionStatus = $success==2 ? 'Success' : getStatusMessage($success);
 
 /**
  * Validate callback authenticity.
@@ -51,11 +84,11 @@ $transactionStatus = $success ? 'Success' : 'Failure';
  * originated from them. In the case of our example here, this is achieved by
  * way of a shared secret which is used to build and compare a hash.
  */
-$secretKey = $gatewayParams['secretKey'];
-if ($hash != md5($invoiceId . $transactionId . $paymentAmount . $secretKey)) {
-    $transactionStatus = 'Hash Verification Failure';
-    $success = false;
-}
+// $secretKey = $gatewayParams['secretKey'];
+// if ($hash != md5($invoiceId . $transactionId . $paymentAmount . $secretKey)) {
+//     $transactionStatus = 'Hash Verification Failure';
+//     $success = false;
+// }
 
 /**
  * Validate Callback Invoice ID.
@@ -98,7 +131,7 @@ checkCbTransID($transactionId);
  */
 logTransaction($gatewayParams['name'], $_POST, $transactionStatus);
 
-if ($success) {
+if ($success==2) {
 
     /**
      * Add Invoice Payment.

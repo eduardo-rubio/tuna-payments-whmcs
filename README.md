@@ -17,6 +17,7 @@ platform.
 | gatewayid         | token / cardInfo.token |
 
 Configure Custom Fields
+Two custom fields must be configured: documenttype and documentnumber
 
 https://docs.whmcs.com/Custom_Fields
 

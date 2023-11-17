@@ -1,4 +1,5 @@
 <?php
+
 /**
  * WHMCS Tuna Payment Gateway Module
  */
@@ -87,21 +88,32 @@ function tunapayment2_config()
     );
 }
 
+/**
+ * Payment link.
+ *
+ * Required by third party payment gateway modules only.
+ *
+ * Defines the HTML output displayed on an invoice. Typically consists of an
+ * HTML form that will take the user to the payment gateway endpoint.
+ *
+ * @param array $params Payment Gateway Module Parameters
+ *
+ * @see https://developers.whmcs.com/payment-gateways/third-party-gateway/
+ *
+ * @return string
+ */
 function tunapayment2_link($params)
 {
     // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
+    $tunaAccount = $params['tunaAccount'];
+    $tunaApptoken = $params['tunaApptoken'];
     $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
 
     // Invoice Parameters
     $invoiceId = $params['invoiceid'];
     $description = $params["description"];
     $amount = $params['amount'];
-    $currencyCode = $params['currency'];
+    $currencyCode = getCurrency2($params['currency']);
 
     // Client Parameters
     $firstname = $params['clientdetails']['firstname'];
@@ -114,6 +126,9 @@ function tunapayment2_link($params)
     $postcode = $params['clientdetails']['postcode'];
     $country = $params['clientdetails']['country'];
     $phone = $params['clientdetails']['phonenumber'];
+    $taxid = $params['clientdetails']['taxid'];
+    $userid = $params['clientdetails']['id'];
+    $fullname = getFullName($params['clientdetails']['fullname']);
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -124,26 +139,131 @@ function tunapayment2_link($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    $url = 'https://www.demopaymentgateway.com/do.payment';
+    // Custom Fields
+    $documenttype = $params['customfield']['documenttype'];
+    $documentnumber = $params['customfield']['documentnumber'];
 
-    $postfields = array();
-    $postfields['username'] = $username;
-    $postfields['invoice_id'] = $invoiceId;
-    $postfields['description'] = $description;
-    $postfields['amount'] = $amount;
-    $postfields['currency'] = $currencyCode;
-    $postfields['first_name'] = $firstname;
-    $postfields['last_name'] = $lastname;
-    $postfields['email'] = $email;
-    $postfields['address1'] = $address1;
-    $postfields['address2'] = $address2;
-    $postfields['city'] = $city;
-    $postfields['state'] = $state;
-    $postfields['postcode'] = $postcode;
-    $postfields['country'] = $country;
-    $postfields['phone'] = $phone;
-    $postfields['callback_url'] = $systemUrl . '/modules/gateways/callback/' . $moduleName . '.php';
-    $postfields['return_url'] = $returnUrl;
+    $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
+
+    if ($testMode == 'yes') {
+        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Init';
+        $tunaAccount = 'demo';
+        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    }
+
+
+    // $countryCode = $country;
+    if (is_null($currencyCode)) {
+        $currencyCode = $country;
+    }
+
+    // {
+    //     "partnerUniqueId": "#032",
+    //     "customer": {
+    //       "id": "7",
+    //       "email": "maju.cheapetta@synapcom.com.br",
+    //       "document": "744.479.870-23",
+    //       "documentType": "CPF",
+    //       "name": "Maju Cheapetta"
+    //     },
+    //     "paymentItems": {
+    //       "items": [
+    //         {
+    //           "amount": 20,
+    //           "detailUniqueId": "A01",
+    //           "productDescription": "Test product",
+    //           "itemQuantity": 1
+    //         }
+    //       ]
+    //     },
+    //     "paymentData": {
+    //       "paymentMethods": [
+    //         {
+    //           "paymentMethodType": "D",
+    //           "amount": 20,
+    //           "pix": {
+    //             "name": "Maju Cheapetta",
+    //             "document": "744.479.870-23",
+    //             "documentType": "CPF"
+    //           }
+    //         }
+    //       ],
+    //       "deliveryAddress": {
+    //         "street": "Rua João Longo",
+    //         "number": "1004",
+    //         "neighborhood": "Jandira",
+    //         "city": "São Paulo",
+    //         "state": "SP",
+    //         "postalCode": "06608-420",
+    //         "phone": "(11) 6536-8864",
+    //         "country": "BR"
+    //       },
+    //       "countryCode": "BR"
+    //     }
+    //   }
+
+    $customer = array(
+        'id' => strval($userid),
+        'email' => $email,
+        'document' => strval($documentnumber),
+        'documentType' => $documenttype,
+        'name' => $fullname,
+    );
+
+    $paymentItems = array(
+        'items' => [
+            array(
+                'amount' => $amount,
+                'detailUniqueId' => $invoiceId,
+                'productDescription' => $description,
+                'itemQuantity' => 1,
+            )
+        ]
+    );
+
+
+    $deliveryAddress = array(
+        'street' => $address1,
+        'number' => $address2,
+        'neighborhood' => $city,
+        'city' => $city,
+        'state' => $state,
+        'postalCode' => $postcode,
+        'phone' => $phone,
+        'country' => $country,
+    );
+
+    $paymentData = array(
+        'paymentMethods' => [
+            array(
+                'paymentMethodType' => 'D',
+                'amount' => $amount,
+                'pix' => array(
+                    'name' => $fullname,
+                    'document' => $documentnumber,
+                    'documentType' => $documenttype,
+                ),
+            ),
+        ],
+        'deliveryAddress' => $deliveryAddress,
+        "countrycode" => $currencyCode,
+    );
+
+    $postheader = array(
+        'accept: application/json',
+        'Content-Type: application/json',
+        'x-tuna-account: ' . $tunaAccount,
+        'x-tuna-apptoken: ' . $tunaApptoken,
+    );
+
+    $postfields = [
+        'partnerUniqueId' => $invoiceId,
+        'customer' => $customer,
+        'paymentItems' => $paymentItems,
+        'paymentData' => $paymentData
+    ];
+
+    $url = $paymentUrl;
 
     $htmlOutput = '<form method="post" action="' . $url . '">';
     foreach ($postfields as $k => $v) {
@@ -153,164 +273,4 @@ function tunapayment2_link($params)
     $htmlOutput .= '</form>';
 
     return $htmlOutput;
-}
-
-/**
- * Refund transaction.
- *
- * Called when a refund is requested for a previously successful transaction.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/refunds/
- *
- * @return array Transaction response status
- */
-function tunapayment2_refund($params)
-{
-    // Gateway Configuration Parameters
-    $tunaAccount = $params['tunaAccount'];
-    $tunaApptoken = $params['tunaApptoken'];
-    $testMode = $params['testMode'];
-
-    // Transaction Parameters
-    $transactionIdToRefund = $params['transid'];
-    $refundAmount = $params['amount'];
-    $currencyCode = $params['currency'];
-
-    // Client Parameters
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-
-    $cancelUrl = 'https://engine.tunagateway.com/api/Payment/Cancel';
-
-    if ($testMode == 'yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Cancel';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
-    }
-
-    $partnerUniqueId = $invoiceId;
-
-    $postheader = array(
-        'accept: application/json',
-        'Content-Type: application/json',
-        'x-tuna-account: ' . $tunaAccount,
-        'x-tuna-apptoken: ' . $tunaApptoken,
-    );
-
-    $cardDetail = [
-        array(
-            'amount' => $refundAmount,
-            'methodId' => 0,
-            'Splits' => [
-                array(
-                    'MerchantID' => '',
-                    'Amount' => $refundAmount,
-                )
-            ],
-        )
-    ];
-
-    $postfields = [
-        'cardDetail' => $cardDetail,
-        'paymentKey' => '',
-        'partnerUniqueId' => $partnerUniqueId,
-        'paymentDay' => '',
-    ];
-
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $cancelUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
-
-    $data = json_decode($response);
-
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
-
-    // perform API call to initiate refund and interpret result
-
-    if ($data->code == 1) {
-        if ($data->status == 1) {
-            return array(
-                // 'success' if successful, otherwise 'declined', 'error' for failure
-                'status' => 'success',
-                // Data to be recorded in the gateway log - can be a string or array
-                'rawdata' => $data,
-                // Unique Transaction ID for the refund transaction
-                'transid' => $transactionIdToRefund,
-            );
-
-        }
-    }
-    ;
-    return array(
-        'status' => 'error',
-        'rawdata' => $data,
-    );    // perform API call to initiate refund and interpret result
-}
-
-/**
- * Cancel subscription.
- *
- * If the payment gateway creates subscriptions and stores the subscription
- * ID in tblhosting.subscriptionid, this function is called upon cancellation
- * or request by an admin user.
- *
- * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/subscription-management/
- *
- * @return array Transaction response status
- */
-function tunapayment2_cancelSubscription($params)
-{
-    // Gateway Configuration Parameters
-    $accountId = $params['accountID'];
-    $secretKey = $params['secretKey'];
-    $testMode = $params['testMode'];
-    $dropdownField = $params['dropdownField'];
-    $radioField = $params['radioField'];
-    $textareaField = $params['textareaField'];
-
-    // Subscription Parameters
-    $subscriptionIdToCancel = $params['subscriptionID'];
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // perform API call to cancel subscription and interpret result
-
-    return array(
-        // 'success' if successful, any other value for failure
-        'status' => 'success',
-        // Data to be recorded in the gateway log - can be a string or array
-        'rawdata' => $responseData,
-    );
 }
