@@ -11,6 +11,10 @@ if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
 }
 
+$global_paymentUrl;
+$global_postheader;
+$global_postfields;
+
 $tunapix_Description = "Tuna Pix";
 $tunapix_Version = "1.0.0";
 
@@ -29,7 +33,7 @@ function tunapix_MetaData()
     global $tunapix_Description;
 
     return array(
-        'DisplayName' => 'Tuna Payment Gateway Module Pix',
+        'DisplayName' => 'Tuna Payment Pix',
         // Use API Version 1.1
         'APIVersion' => '1.1',
         // You can utilise custom templates here
@@ -99,6 +103,10 @@ function tunapix_config()
  */
 function tunapix_link($params)
 {
+    global $global_paymentUrl;
+    global $global_postheader;
+    global $global_postfields;
+    
     // Gateway Configuration Parameters
     $tunaAccount = $params['tunaAccount'];
     $tunaApptoken = $params['tunaApptoken'];
@@ -216,7 +224,6 @@ function tunapix_link($params)
         ]
     );
 
-
     $deliveryAddress = array(
         'street' => $address1,
         'number' => $address2,
@@ -244,28 +251,56 @@ function tunapix_link($params)
         "countrycode" => $currencyCode,
     );
 
-    $postheader = array(
+    $global_postheader = array(
         'accept: application/json',
         'Content-Type: application/json',
         'x-tuna-account: ' . $tunaAccount,
         'x-tuna-apptoken: ' . $tunaApptoken,
     );
 
-    $postfields = [
+    $global_postfields = [
         'partnerUniqueId' => $invoiceId,
         'customer' => $customer,
         'paymentItems' => $paymentItems,
         'paymentData' => $paymentData
     ];
 
-    $url = $paymentUrl;
 
-    $htmlOutput = '<form method="post" action="' . $url . '">';
-    foreach ($postfields as $k => $v) {
-        $htmlOutput .= '<input type="hidden" name="' . $k . '" value="' . urlencode($v) . '" />';
-    }
+    $global_paymentUrl = $paymentUrl;
+
+    $htmlOutput = '<form method="post" action="tunapix.php">';
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
 
     return $htmlOutput;
 }
+
+function postLink() {
+
+    global $global_paymentUrl;
+    global $global_postheader;
+    global $global_postfields;
+    
+    $paymentUrl = $global_paymentUrl;
+    $postheader = $global_postheader;
+    $postfields = $global_postfields;
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, $paymentUrl);
+    curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $init_response = curl_exec($ch);
+    curl_close($ch);
+
+    $data = json_decode($init_response);
+
+    logModuleCall("Tuna Payment Pix", "tunapix_link", json_encode($postfields), $init_response, $data, $postheader);
+
+}
+
+if(isset($_POST['submit']))
+{
+   postLink();
+} 

@@ -28,7 +28,7 @@ function tunapayment_MetaData()
     global $tunapayment_Description;
 
     return array(
-        'DisplayName' => 'Tuna Payment Gateway Module',
+        'DisplayName' => 'Tuna Payment CreditCard',
         // Use API Version 1.1
         'APIVersion' => '1.1',
         // You can utilise custom templates here

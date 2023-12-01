@@ -1,11 +1,11 @@
 {
     "schema": "1.0",
     "type": "whmcs-gateways",
-    "name": "tuna-payment",
+    "name": "tunapayment",
     "license": "MIT",
     "category": "gateway",
     "description": {
-        "name": "Tuna Payment Gateway Module",
+        "name": "Tuna Payment CreditCard",
         "tagline": "Payment Gateway modules allow you to integrate payment solutions with the WHMCS platform.",
         "long": "The Tuna files here are a Payment Gateway module for WHMCS be structured and implemented.",
         "features": [
