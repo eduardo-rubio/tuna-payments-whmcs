@@ -1,0 +1,926 @@
+openapi: 3.0.1
+servers:
+  - url: https://token.tuna-demo.uy
+    description: sandbox
+  - url: https://token.tunagateway.com
+    description: production
+info:
+  title: Tuna Token API
+  description: >
+    # Introduction
+
+
+    Tuna Token API is your secret vault at Tuna, where you can store sensitive
+    credit card
+
+    data and retrieve secure tokens for later use.
+
+
+    We always recommend using our plugins, but be our guest and use the API
+    described below.
+
+    Tuna is a PCI Level 1 certified company; your data is safe with us.
+
+
+    Tuna APIs are organized around REST. Our APIs have predictable
+    resource-oriented URLs,
+
+    accept form-encoded request bodies, return JSON-encoded responses, and use
+    standard HTTP
+
+    response codes, authentication, and verbs.
+
+
+    You can use the Tuna APIs in sandbox mode, which does not affect your live
+    data or
+
+    interact with the banking networks. The API server and keys you use for the
+    request
+
+    determine whether the request is in production mode or sandbox mode.
+
+
+    # API REST Guides
+
+
+    - **API REST**: are you looking for a guide for our APIs? Check out the
+    introduction to the [API REST](/api).
+
+
+    - **Payment Integration**: do you need to be able to perform secure credit
+    card payments and/or also use other payment methods such as Debit Card,
+    Boleto, PIX, and Bitcoin? Check out how to perform a [Payment
+    Integration](/api/payment-integration) with our [Payment API](/api/payment)
+    and [Token API](/api/token).
+
+
+    - **Split Integration**: are you looking to set up a marketplace so your
+    merchants will use split payment solutions in your marketplace? Check out
+    how to perform a [Split Integration](/api/split-integration) with our
+    [Merchant API](/api/merchant).
+
+
+    - **Tuna Codes**: do you need to learn about your codes and status? Please,
+    check out the [Tuna Codes](/api/tuna-codes).
+
+
+    - **Webhooks Notifications**: learn more about our notifications in the
+    guide [Webhooks Notifications](/api/webhooks-notifications).
+
+
+    - **Sandbox Environment**: check out for information about test data and a
+    full description of the [Sandbox Environment](/api/sandbox-environment).
+
+
+    - **Idempotent Requests**: do you require idempotent requests? Take a look
+    how to make [Idempotent Requests](/api/idempotent-requests).
+
+
+    # Examples
+
+
+    There are many examples on the right. Please check all that are meaningful
+    to your company.
+
+
+    # Authentication
+
+
+    Your first secrets are provided when you sign up for an account:  account
+    name and app token.
+
+
+    You can generate additional API keys and delete API keys (as you may need to
+    rotate your
+
+    keys in the future). You authenticate to Tuna APIs by providing your account
+    name and app
+
+    token key in the request HTTP headers.
+
+
+    Tuna's sandbox environment uses public keys available to anyone:
+
+
+    ```yaml
+
+    "x-tuna-account": "demo"
+
+    "x-tuna-apptoken": "a3823a59-66bb-49e2-95eb-b47c447ec7a7"
+
+    ```
+  version: v1
+  license:
+    name: MIT License
+    url: https://dev.tuna.uy/api/license
+components:
+  schemas:
+    Account:
+      description: The name of your account.
+      type: string
+    AppToken:
+      description: The app token associated with your account.
+      type: string
+      format: uuid
+    CreateSessionRequestSchema:
+      type: object
+      properties: &ref_0
+        customer:
+          type: object
+          description: This object is used to pass on **customer data**.
+          nullable: true
+          properties:
+            iD:
+              type: string
+              description: A string that identifies the customer.
+              nullable: true
+            email:
+              type: string
+              description: Customer's email.
+              nullable: true
+    CreateSessionResponseSchema:
+      type: object
+      properties: &ref_3
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+    GenerateRequestSchema:
+      type: object
+      properties: &ref_6
+        card:
+          type: object
+          description: An object that holds credit card payment information.
+          nullable: true
+          properties:
+            cardNumber:
+              type: string
+              description: Number of the card as printed on the credit card.
+              nullable: true
+            cardHolderName:
+              type: string
+              description: Name of the cardholder as printed on the credit card.
+              nullable: true
+            expirationMonth:
+              type: integer
+              description: >-
+                Two digits are used to represent the expiration month of the
+                card.
+              format: int16
+              nullable: true
+            expirationYear:
+              type: integer
+              description: >-
+                Four digits are used to represent the expiration year of the
+                card.
+              format: int16
+              nullable: true
+            singleUse:
+              type: boolean
+              description: >-
+                Use **false** if it's a previously saved credit card (default).
+                Use **true** if the token was generated for single use.
+              nullable: true
+            cVV:
+              type: string
+              description: CVV number of the card as printed on the credit card.
+              nullable: true
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+          nullable: true
+    GenerateResponseSchema:
+      type: object
+      properties: &ref_9
+        token:
+          type: string
+          description: An irreversible token used to represent the credit card.
+          nullable: true
+        brand:
+          type: string
+          description: The brand of the credit card.
+          nullable: true
+        validFor:
+          type: integer
+          description: >-
+            The time in seconds where the CVV is valid in our servers. After
+            this time, the CVV is discarded for PCI security reasons.
+          format: int32
+          nullable: true
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+    ListRequestSchema:
+      type: object
+      properties: &ref_13
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+          nullable: true
+    ListResponseSchema:
+      type: object
+      properties: &ref_16
+        tokens:
+          type: array
+          description: List of tokens associated with a **sessionId**.
+          nullable: true
+          items:
+            type: object
+            properties:
+              token:
+                type: string
+                description: An irreversible token used to represent the credit card.
+                nullable: true
+              brand:
+                type: string
+                description: The brand of the credit card.
+                nullable: true
+              cardHolderName:
+                type: string
+                description: Name of the cardholder as printed on the credit card.
+                nullable: true
+              expirationMonth:
+                type: integer
+                description: >-
+                  Two digits are used to represent the expiration month of the
+                  card.
+                format: int32
+                nullable: true
+              expirationYear:
+                type: integer
+                description: >-
+                  Four digits are used to represent the expiration year of the
+                  card.
+                format: int32
+                nullable: true
+              maskedNumber:
+                type: string
+                description: Masked credit card number.
+                nullable: true
+              singleUse:
+                type: boolean
+                description: >-
+                  Use **false** if it's a previously saved credit card
+                  (default). Use **true** if the token was generated for single
+                  use.
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+    BindRequestSchema:
+      type: object
+      properties: &ref_20
+        token:
+          type: string
+          description: An irreversible token used to represent the credit card.
+          nullable: true
+        cVV:
+          type: string
+          description: CVV number of the card as printed on the credit card.
+          nullable: true
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+          nullable: true
+    BindResponseSchema:
+      type: object
+      properties: &ref_23
+        validFor:
+          type: integer
+          description: >-
+            The time in seconds where the CVV is valid in our servers. After
+            this time, the CVV is discarded for PCI security reasons.
+          format: int32
+          nullable: true
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+    ValidateRequestSchema:
+      type: object
+      properties: &ref_26
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+          nullable: true
+    ValidateResponseSchema:
+      type: object
+      properties: &ref_29
+        partnerUniqueId:
+          type: string
+          description: Your unique ID for the order. It is used to track the order.
+          nullable: true
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+    DeleteRequestSchema:
+      type: object
+      properties: &ref_32
+        token:
+          type: string
+          description: An irreversible token used to represent the credit card.
+          nullable: true
+        sessionId:
+          type: string
+          description: >-
+            An uuid session identifier that has been generated at [the
+            **NewSession** endpoint.](/api/token#operation/NewSession)
+          nullable: true
+    DeleteResponseSchema:
+      type: object
+      properties: &ref_35
+        status:
+          type: string
+          nullable: true
+        code:
+          type: string
+          description: >-
+            Numeric code that states if the execution was successful or not.
+            Positive numbers mean success; negative numbers indicate failures.
+            Please refer to the [message code
+            table](/api/tuna-codes#message-code-list) for a detailed list of all
+            possible values.
+          nullable: true
+        message:
+          type: string
+          description: >-
+            A human readable message that gives details about what the code
+            means.
+          nullable: true
+  securitySchemes:
+    Account:
+      type: apiKey
+      in: header
+      name: x-tuna-account
+    AppToken:
+      type: apiKey
+      in: header
+      name: x-tuna-apptoken
+  examples:
+    CreateSessionRequestTemplate:
+      summary: Example Template
+      value: &ref_1
+        customer:
+          iD: string
+          email: string
+    NewSessionRequestExample:
+      summary: Request Example
+      value: &ref_2
+        customer:
+          id: '7'
+          email: maju.cheapetta@synapcom.com.br
+    CreateSessionResponseTemplate:
+      summary: Example Template
+      value: &ref_4
+        sessionId: uuid
+        code: string
+        message: string
+    NewSessionResponseExample:
+      summary: Response Example
+      value: &ref_5
+        sessionId: >-
+          qsTfE2PUGhuncSiaSkFxwJ5vqtsMDrUQsnyM4ZbeTKvx5EJutFovAHEt2/QGjHe61spKmCY8saNoht+VfqTGgxqu2r49ShW2
+        code: 1
+        message: null
+    GenerateRequestTemplate:
+      summary: Example Template
+      value: &ref_7
+        card:
+          cardNumber: string
+          cardHolderName: string
+          expirationMonth: int16
+          expirationYear: int16
+          singleUse: boolean
+          cVV: string
+        sessionId: uuid
+    GenerateRequestExample:
+      summary: Request Example
+      value: &ref_8
+        sessionId: >-
+          qsTfE2PUGhuncSiaSkFxwJ5vqtsMDrUQsnyM4ZbeTKvx5EJutFovAHEt2/QGjHe61spKmCY8saNoht+VfqTGgxqu2r49ShW2
+        card:
+          cardHolderName: Captured
+          cardNumber: '4111111111111111'
+          expirationMonth: 12
+          expirationYear: 2023
+          cvv: '222'
+          singleUse: false
+    GenerateResponseTemplate:
+      summary: Example Template
+      value: &ref_10
+        token: string
+        brand: string
+        validFor: int32
+        code: string
+        message: string
+    GenerateResponseExample:
+      summary: Response Example
+      value: &ref_11
+        token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+        brand: Visa
+        validFor: null
+        code: 1
+        message: null
+    GenerateResponseSessionExpired:
+      summary: Session Expired
+      value: &ref_12
+        token: null
+        brand: null
+        code: -1
+        message: Session has expired
+    ListRequestTemplate:
+      summary: Example Template
+      value: &ref_14
+        sessionId: uuid
+    ListRequestExample:
+      summary: Request Example
+      value: &ref_15
+        sessionId: >-
+          k4cUOKYig2artPWooVru/GoYbQU2Jc1PhbEZtZcnlQqXHO7kLPXAgFhjJJuPsb8DIij/RgNyxx7NpNBhkT6w+CEfzrfjpeyP
+    ListResponseTemplate:
+      summary: Example Template
+      value: &ref_17
+        tokens:
+          - token: string
+            brand: string
+            cardHolderName: string
+            expirationMonth: int32
+            expirationYear: int32
+            maskedNumber: string
+            singleUse: boolean
+        code: string
+        message: string
+    ListResponseExample:
+      summary: Response Example
+      value: &ref_18
+        tokens:
+          - token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+            brand: VISA
+            cardHolderName: Captured
+            expirationMonth: 12
+            expirationYear: 2023
+            maskedNumber: '411111xxxxxx1111   '
+            singleUse: false
+            data: null
+          - token: ct_MjlkZjgwMTgtMmVhMi00MjRlLTliNDAtNWVhMmUyYzU2NWE40
+            brand: VISA
+            cardHolderName: Authorized
+            expirationMonth: 12
+            expirationYear: 2022
+            maskedNumber: '411111xxxxxx1111   '
+            singleUse: false
+            data: null
+        code: 1
+        message: null
+    ListResponseSessionExpired:
+      summary: Session Expired
+      value: &ref_19
+        tokens: null
+        code: -1
+        message: Session has expired
+    BindRequestTemplate:
+      summary: Example Template
+      value: &ref_21
+        token: string
+        cVV: string
+        sessionId: uuid
+    BindRequestExample:
+      summary: Request Example
+      value: &ref_22
+        sessionId: >-
+          qsTfE2PUGhuncSiaSkFxwJ5vqtsMDrUQsnyM4ZbeTKvx5EJutFovAHEt2/QGjHe61spKmCY8saNoht+VfqTGgxqu2r49ShW2
+        token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+        cvv: '222'
+    BindResponseTemplate:
+      summary: Example Template
+      value: &ref_24
+        validFor: int32
+        code: string
+        message: string
+    BindResponseExample:
+      summary: Response Example
+      value: &ref_25
+        validFor: null
+        code: 1
+        message: Bind succeded
+    ValidateRequestTemplate:
+      summary: Example Template
+      value: &ref_27
+        sessionId: uuid
+    ValidateSessionRequestExample:
+      summary: Request Example
+      value: &ref_28
+        sessionId: >-
+          qsTfE2PUGhuncSiaSkFxwJ5vqtsMDrUQsnyM4ZbeTKvx5EJutFovAHEt2/QGjHe61spKmCY8saNoht+VfqTGgxqu2r49ShW2
+    ValidateResponseTemplate:
+      summary: Example Template
+      value: &ref_30
+        partnerUniqueId: string
+        code: string
+        message: string
+    ValidateSessionResponseExample:
+      summary: Response Example
+      value: &ref_31
+        partnerId: 1
+        partnerUniqueId: ''
+        accountIsolation: false
+        code: 1
+        message: null
+    DeleteRequestTemplate:
+      summary: Example Template
+      value: &ref_33
+        token: string
+        sessionId: uuid
+    DeleteRequestExample:
+      summary: Request Example
+      value: &ref_34
+        sessionId: >-
+          qsTfE2PUGhuncSiaSkFxwJ5vqtsMDrUQsnyM4ZbeTKvx5EJutFovAHEt2/QGjHe61spKmCY8saNoht+VfqTGgxqu2r49ShW2
+        token: ct_NjJmM2QxOTUtYTM4OS00YmYyLTg4MDAtOTE3YzY1NzM0NmE30
+    DeleteResponseTemplate:
+      summary: Example Template
+      value: &ref_36
+        status: string
+        code: string
+        message: string
+    DeleteResponseExample:
+      summary: Response Example
+      value: &ref_37
+        status: Success
+        code: 1
+        message: null
+    DeleteResponseCardNotRemoved:
+      summary: Card Not Removed
+      value: &ref_38
+        code: -1
+        message: Card can not be removed
+        status: null
+security:
+  - Account: []
+    AppToken: []
+paths:
+  /api/Token/NewSession:
+    post:
+      summary: New Session
+      description: >
+        Creates a new session. The **sessionId** returned must be used on all
+        following api methods.
+      operationId: NewSession
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_0
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_1
+              Example:
+                summary: Request Example
+                value: *ref_2
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_3
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_4
+                Example:
+                  summary: Response Example
+                  value: *ref_5
+  /api/Token/Generate:
+    post:
+      summary: Generate
+      description: Generates a new token for a given credit card number.
+      operationId: Generate
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_6
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_7
+              Example:
+                summary: Request Example
+                value: *ref_8
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_9
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_10
+                Example:
+                  summary: Response Example
+                  value: *ref_11
+                SessionExpired:
+                  summary: Session Expired
+                  value: *ref_12
+  /api/Token/List:
+    post:
+      summary: List
+      description: >-
+        Lists the tokens of saved cards from the user associated with a
+        **sessionId**.
+      operationId: List
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_13
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_14
+              Example:
+                summary: Request Example
+                value: *ref_15
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_16
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_17
+                Example:
+                  summary: Response Example
+                  value: *ref_18
+                SessionExpired:
+                  summary: Session Expired
+                  value: *ref_19
+  /api/Token/Bind:
+    post:
+      summary: Bind
+      description: Binds a CVV with a token.
+      operationId: Bind
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_20
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_21
+              Example:
+                summary: Request Example
+                value: *ref_22
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_23
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_24
+                Example:
+                  summary: Response Example
+                  value: *ref_25
+  /api/Token/ValidateSession:
+    post:
+      summary: Validate
+      description: This method can be used to verify if a session is still valid.
+      operationId: ValidateSession
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_26
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_27
+              Example:
+                summary: Request Example
+                value: *ref_28
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_29
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_30
+                Example:
+                  summary: Response Example
+                  value: *ref_31
+  /api/Token/Delete:
+    delete:
+      summary: Delete
+      description: Deletes a token.
+      operationId: Delete
+      parameters:
+        - in: header
+          name: x-tuna-account
+          required: true
+          schema:
+            description: The name of your account.
+            type: string
+        - in: header
+          name: x-tuna-apptoken
+          required: true
+          schema:
+            description: The app token associated with your account.
+            type: string
+            format: uuid
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties: *ref_32
+            examples:
+              Template:
+                summary: Example Template
+                value: *ref_33
+              Example:
+                summary: Request Example
+                value: *ref_34
+      responses:
+        '200':
+          description: Success
+          content:
+            application/json:
+              schema:
+                type: object
+                properties: *ref_35
+              examples:
+                Template:
+                  summary: Example Template
+                  value: *ref_36
+                Example:
+                  summary: Response Example
+                  value: *ref_37
+                CardNotRemoved:
+                  summary: Card Not Removed
+                  value: *ref_38

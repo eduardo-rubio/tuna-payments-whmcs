@@ -272,31 +272,41 @@ function tunapix_link($params)
     $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
     $htmlOutput .= '</form>';
 
+    logModuleCall("Tuna Payment Pix", "tunapix_link", json_encode($global_postfields), $global_paymentUrl, $htmlOutput, $global_postheader);
+
     return $htmlOutput;
 }
 
 function postLink() {
+    global $global_paymentUrl, $global_postHeader, $global_postFields;
 
     global $global_paymentUrl;
     global $global_postheader;
     global $global_postfields;
     
     $paymentUrl = $global_paymentUrl;
+    $postHeader = $global_postHeader;
+    $postFields = $global_postFields;
     $postheader = $global_postheader;
     $postfields = $global_postfields;
 
+    $ch = curl_init($paymentUrl);
     $ch = curl_init();
     curl_setopt($ch, CURLOPT_URL, $paymentUrl);
     curl_setopt($ch, CURLOPT_POST, true);
+    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
     curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
     curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
     curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    $response = curl_exec($ch);
     $init_response = curl_exec($ch);
     curl_close($ch);
 
+    logModuleCall("Tuna Payment Pix", "postLink", json_encode($postFields), $response, null, $postHeader);
     $data = json_decode($init_response);
 
-    logModuleCall("Tuna Payment Pix", "tunapix_link", json_encode($postfields), $init_response, $data, $postheader);
+    logModuleCall("Tuna Payment Pix", "postlink", json_encode($postfields), $init_response, $data, $postheader);
 
 }
 
