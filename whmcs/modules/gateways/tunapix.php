@@ -1,316 +1,275 @@
 <?php
 
 /**
- * WHMCS Tuna Payment Gateway Module
+ * WHMCS Tuna Pix Payment Gateway Module
  */
 
 require_once __DIR__ . '/tunapayment/tunapaymenthelper.php';
-require_once __DIR__ . '/../../includes/modulefunctions.php';
 
-if (!defined("WHMCS")) {
-    die("This file cannot be accessed directly");
+if (!defined('WHMCS')) {
+    die('This file cannot be accessed directly');
 }
 
-$global_paymentUrl;
-$global_postheader;
-$global_postfields;
+$tunapix_Description = 'Tuna Pix';
+$tunapix_Version = '1.0.0';
 
-$tunapix_Description = "Tuna Pix";
-$tunapix_Version = "1.0.0";
-
-/**
- * Define module related meta data.
- *
- * Values returned here are used to determine module related capabilities and
- * settings.
- *
- * @see https://developers.whmcs.com/payment-gateways/meta-data-params/
- *
- * @return array
- */
 function tunapix_MetaData()
 {
-    global $tunapix_Description;
-
-    return array(
+    return [
         'DisplayName' => 'Tuna Payment Pix',
-        // Use API Version 1.1
         'APIVersion' => '1.1',
-        // You can utilise custom templates here
-    );
+    ];
 }
 
-/**
- * Define gateway configuration options.
- *
- * The fields you define here determine the configuration options that are
- * presented to administrator users when activating and configuring your
- * payment gateway module for use.
- *
- *
- * @return array
- */
 function tunapix_config()
 {
-    global $tunapix_Description, $tunapix_Version;
-
-    return array(
-        // the friendly display name for a payment gateway should be
-        // defined here for backwards compatibility
-        'FriendlyName' => array(
+    return [
+        'FriendlyName' => [
             'Type' => 'System',
             'Value' => 'Tuna Payment Gateway Module Pix',
-        ),
-        // "x-tuna-account": "demo"
-        'tunaAccount' => array(
+        ],
+        'tunaAccount' => [
             'FriendlyName' => 'Tuna Account',
             'Type' => 'text',
             'Size' => '25',
             'Default' => '',
             'Description' => 'Enter your Tuna Account here',
-        ),
-        // "x-tuna-apptoken": "a3823a59-66bb-49e2-95eb-b47c447ec7a7"
-        'tunaApptoken' => array(
+        ],
+        'tunaApptoken' => [
             'FriendlyName' => 'Tuna App Token',
-            'Type' => 'text',
+            'Type' => 'password',
             'Size' => '36',
             'Default' => '',
             'Description' => 'Enter Tuna App Token here',
-        ),
-        // Test Environment
-        'testMode' => array(
+        ],
+        'testMode' => [
             'FriendlyName' => 'Test Environment',
             'Type' => 'yesno',
             'Description' => 'Tick to enable test environment',
-        ),
-
-    );
+        ],
+    ];
 }
 
 /**
- * Payment link.
+ * Escape a value for use in the invoice HTML.
  *
- * Required by third party payment gateway modules only.
+ * @param mixed $value
+ * @return string
+ */
+function tunapix_escape($value)
+{
+    return htmlspecialchars((string) $value, ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+}
+
+/**
+ * Render the server-side Pix creation form.
  *
- * Defines the HTML output displayed on an invoice. Typically consists of an
- * HTML form that will take the user to the payment gateway endpoint.
+ * Submitting to the current WHMCS invoice page keeps Tuna credentials on the
+ * server and avoids relying on PHP globals across different HTTP requests.
+ *
+ * @param array $params
+ * @return string
+ */
+function tunapix_payment_form(array $params)
+{
+    $action = isset($_SERVER['REQUEST_URI']) ? $_SERVER['REQUEST_URI'] : '';
+    $csrf = function_exists('generate_token') ? generate_token('plain') : '';
+
+    $html = '<form method="post" action="' . tunapix_escape($action) . '">';
+    $html .= '<input type="hidden" name="tunapix_invoice_id" value="' . tunapix_escape($params['invoiceid']) . '">';
+    if ($csrf !== '') {
+        $html .= '<input type="hidden" name="token" value="' . tunapix_escape($csrf) . '">';
+    }
+    $html .= '<button type="submit">' . tunapix_escape($params['langpaynow']) . '</button>';
+    $html .= '</form>';
+
+    return $html;
+}
+
+/**
+ * Render Pix QR data returned by Tuna.
+ *
+ * @param object $data
+ * @return string
+ */
+function tunapix_payment_details($data)
+{
+    $method = isset($data->methods[0]) ? $data->methods[0] : null;
+    $pixInfo = $method && isset($method->pixInfo) ? $method->pixInfo : null;
+
+    if (!$pixInfo) {
+        return '<p>El pago Pix fue creado, pero Tuna no devolvió los datos del código QR.</p>';
+    }
+
+    // The Payment/Init response schema currently spells these fields qRImage
+    // and qRContent, while Tuna's example response uses qrImage/qrContent.
+    // Accept both variants to remain compatible with the documented schema
+    // and the real example payload.
+    // https://dev.tuna.uy/api/payment/
+    $qrImage = isset($pixInfo->qrImage) ? $pixInfo->qrImage : (isset($pixInfo->qRImage) ? $pixInfo->qRImage : '');
+    $copyPaste = isset($pixInfo->qrCopyPaste) ? $pixInfo->qrCopyPaste : '';
+    $qrContent = isset($pixInfo->qrContent) ? $pixInfo->qrContent : (isset($pixInfo->qRContent) ? $pixInfo->qRContent : '');
+    if ($copyPaste === '') {
+        $copyPaste = $qrContent;
+    }
+
+    $html = '<div class="tunapix-payment">';
+    $html .= '<p>Escaneá el código QR o copiá el código Pix para completar el pago.</p>';
+
+    if (
+        $qrImage !== ''
+        && filter_var($qrImage, FILTER_VALIDATE_URL)
+        && strtolower((string) parse_url($qrImage, PHP_URL_SCHEME)) === 'https'
+    ) {
+        $html .= '<img src="' . tunapix_escape($qrImage) . '" alt="Código QR Pix" style="max-width:280px;height:auto">';
+    }
+
+    if ($copyPaste !== '') {
+        $html .= '<label for="tunapix-copy-paste">Pix copia y pega</label>';
+        $html .= '<textarea id="tunapix-copy-paste" readonly rows="4" style="width:100%">'
+            . tunapix_escape($copyPaste)
+            . '</textarea>';
+    }
+
+    $html .= '</div>';
+    return $html;
+}
+
+/**
+ * Create or display a Pix payment for a WHMCS invoice.
  *
  * @param array $params Payment Gateway Module Parameters
- *
- * @see https://developers.whmcs.com/payment-gateways/third-party-gateway/
- *
  * @return string
  */
 function tunapix_link($params)
 {
-    global $global_paymentUrl;
-    global $global_postheader;
-    global $global_postfields;
-    
-    // Gateway Configuration Parameters
-    $tunaAccount = $params['tunaAccount'];
-    $tunaApptoken = $params['tunaApptoken'];
-    $testMode = $params['testMode'];
+    $invoiceId = (string) $params['invoiceid'];
+    $amount = (float) $params['amount'];
+    if ($amount <= 0) {
+        return '<p>No se puede crear el pago Pix: el importe debe ser mayor que cero.</p>';
+    }
+    $requestedInvoiceId = isset($_POST['tunapix_invoice_id'])
+        ? (string) $_POST['tunapix_invoice_id']
+        : '';
+    $cacheKey = hash('sha256', $invoiceId . '|' . (string) $params['amount']);
 
-    // Invoice Parameters
-    $invoiceId = $params['invoiceid'];
-    $description = $params["description"];
-    $amount = $params['amount'];
-    $currencyCode = getCurrency2($params['currency']);
-
-    // Client Parameters
-    $firstname = $params['clientdetails']['firstname'];
-    $lastname = $params['clientdetails']['lastname'];
-    $email = $params['clientdetails']['email'];
-    $address1 = $params['clientdetails']['address1'];
-    $address2 = $params['clientdetails']['address2'];
-    $city = $params['clientdetails']['city'];
-    $state = $params['clientdetails']['state'];
-    $postcode = $params['clientdetails']['postcode'];
-    $country = $params['clientdetails']['country'];
-    $phone = $params['clientdetails']['phonenumber'];
-    $taxid = $params['clientdetails']['taxid'];
-    $userid = $params['clientdetails']['id'];
-    $fullname = getFullName($params['clientdetails']['fullname']);
-
-    // System Parameters
-    $companyName = $params['companyname'];
-    $systemUrl = $params['systemurl'];
-    $returnUrl = $params['returnurl'];
-    $langPayNow = $params['langpaynow'];
-    $moduleDisplayName = $params['name'];
-    $moduleName = $params['paymentmethod'];
-    $whmcsVersion = $params['whmcsVersion'];
-
-    // Custom Fields
-    $documenttype = $params['customfield']['documenttype'];
-    $documentnumber = $params['customfield']['documentnumber'];
-
-    $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
-
-    if ($testMode == 'yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Init';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
+    if (
+        isset($_SESSION['tunapix_payments'][$cacheKey]['createdAt'])
+        && $_SESSION['tunapix_payments'][$cacheKey]['createdAt'] >= time() - 1800
+        && isset($_SESSION['tunapix_payments'][$cacheKey]['data'])
+    ) {
+        // Re-render the same QR instead of issuing another Payment/Init with
+        // the invoice partnerUniqueId. This also avoids duplicate operations
+        // when WHMCS renders the invoice more than once in the same session.
+        $cachedData = json_decode(json_encode($_SESSION['tunapix_payments'][$cacheKey]['data']));
+        return tunapix_payment_details($cachedData);
     }
 
-
-    // $countryCode = $country;
-    if (is_null($currencyCode)) {
-        $currencyCode = $country;
+    if ($requestedInvoiceId !== $invoiceId) {
+        return tunapix_payment_form($params);
     }
 
-    // {
-    //     "partnerUniqueId": "#032",
-    //     "customer": {
-    //       "id": "7",
-    //       "email": "maju.cheapetta@synapcom.com.br",
-    //       "document": "744.479.870-23",
-    //       "documentType": "CPF",
-    //       "name": "Maju Cheapetta"
-    //     },
-    //     "paymentItems": {
-    //       "items": [
-    //         {
-    //           "amount": 20,
-    //           "detailUniqueId": "A01",
-    //           "productDescription": "Test product",
-    //           "itemQuantity": 1
-    //         }
-    //       ]
-    //     },
-    //     "paymentData": {
-    //       "paymentMethods": [
-    //         {
-    //           "paymentMethodType": "D",
-    //           "amount": 20,
-    //           "pix": {
-    //             "name": "Maju Cheapetta",
-    //             "document": "744.479.870-23",
-    //             "documentType": "CPF"
-    //           }
-    //         }
-    //       ],
-    //       "deliveryAddress": {
-    //         "street": "Rua João Longo",
-    //         "number": "1004",
-    //         "neighborhood": "Jandira",
-    //         "city": "São Paulo",
-    //         "state": "SP",
-    //         "postalCode": "06608-420",
-    //         "phone": "(11) 6536-8864",
-    //         "country": "BR"
-    //       },
-    //       "countryCode": "BR"
-    //     }
-    //   }
+    $client = $params['clientdetails'];
+    // Tuna expects an ISO-2 countryCode. Prefer WHMCS's customer country and
+    // infer it from the invoice currency only when the customer value is bad.
+    $countryCode = strtoupper((string) $client['country']);
+    if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        $countryCode = getCurrency2($params['currency']);
+    }
+    if (!is_string($countryCode) || !preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        return '<p>No se puede crear el pago Pix: el país del cliente no es válido.</p>';
+    }
+    $fullname = getFullName($client['fullname'], $params['testMode']);
+    $documentType = isset($params['customfield']['documenttype'])
+        ? $params['customfield']['documenttype']
+        : '';
+    $documentNumber = isset($params['customfield']['documentnumber'])
+        ? $params['customfield']['documentnumber']
+        : '';
 
-    $customer = array(
-        'id' => strval($userid),
-        'email' => $email,
-        'document' => strval($documentnumber),
-        'documentType' => $documenttype,
-        'name' => $fullname,
-    );
+    if ($documentType === '' || $documentNumber === '') {
+        return '<p>No se puede crear el pago Pix: faltan el tipo o el número de documento del cliente.</p>';
+    }
 
-    $paymentItems = array(
-        'items' => [
-            array(
+    // Tuna documents PIX as a direct Payment/Init request: method "D" and no
+    // tokenSession are required. The initial payment normally remains pending
+    // until Tuna later sends a captured ("2") webhook.
+    // https://dev.tuna.uy/api/payment-integration/#direct-request
+    // https://dev.tuna.uy/api/tuna-codes/#payment-methods
+    $postfields = [
+        'partnerUniqueId' => $invoiceId,
+        'customer' => [
+            'id' => (string) $client['id'],
+            'email' => $client['email'],
+            'document' => (string) $documentNumber,
+            'documentType' => $documentType,
+            'name' => $fullname,
+        ],
+        'paymentItems' => [
+            'items' => [[
                 'amount' => $amount,
                 'detailUniqueId' => $invoiceId,
-                'productDescription' => $description,
+                'productDescription' => $params['description'],
                 'itemQuantity' => 1,
-            )
-        ]
-    );
-
-    $deliveryAddress = array(
-        'street' => $address1,
-        'number' => $address2,
-        'neighborhood' => $city,
-        'city' => $city,
-        'state' => $state,
-        'postalCode' => $postcode,
-        'phone' => $phone,
-        'country' => $country,
-    );
-
-    $paymentData = array(
-        'paymentMethods' => [
-            array(
+            ]],
+        ],
+        'paymentData' => [
+            'paymentMethods' => [[
                 'paymentMethodType' => 'D',
                 'amount' => $amount,
-                'pix' => array(
+                'pix' => [
                     'name' => $fullname,
-                    'document' => $documentnumber,
-                    'documentType' => $documenttype,
-                ),
-            ),
+                    'document' => (string) $documentNumber,
+                    'documentType' => $documentType,
+                ],
+            ]],
+            'deliveryAddress' => [
+                'street' => $client['address1'],
+                'number' => $client['address2'],
+                'neighborhood' => $client['city'],
+                'city' => $client['city'],
+                'state' => $client['state'],
+                'postalCode' => $client['postcode'],
+                'phone' => $client['phonenumber'],
+                'country' => $client['country'],
+            ],
+            'countryCode' => $countryCode,
         ],
-        'deliveryAddress' => $deliveryAddress,
-        "countrycode" => $currencyCode,
-    );
-
-    $global_postheader = array(
-        'accept: application/json',
-        'Content-Type: application/json',
-        'x-tuna-account: ' . $tunaAccount,
-        'x-tuna-apptoken: ' . $tunaApptoken,
-    );
-
-    $global_postfields = [
-        'partnerUniqueId' => $invoiceId,
-        'customer' => $customer,
-        'paymentItems' => $paymentItems,
-        'paymentData' => $paymentData
     ];
 
+    $apiConfig = tunapayment_api_config(
+        'payment',
+        'Init',
+        $params['testMode'],
+        $params['tunaAccount'],
+        $params['tunaApptoken']
+    );
+    $response = tunapayment_api_request(
+        $apiConfig['url'],
+        $apiConfig['account'],
+        $apiConfig['appToken'],
+        $postfields,
+        'Tuna Payment Pix',
+        'tunapix_link',
+        'POST',
+        tunapayment_idempotency_key('pix', 'init', $invoiceId, $amount)
+    );
+    $data = $response['data'];
 
-    $global_paymentUrl = $paymentUrl;
+    if (!$response['success']) {
+        return '<p>No se pudo contactar a Tuna para crear el pago Pix. Intentá nuevamente.</p>';
+    }
 
-    $htmlOutput = '<form method="post" action="tunapix.php">';
-    $htmlOutput .= '<input type="submit" value="' . $langPayNow . '" />';
-    $htmlOutput .= '</form>';
+    if (!isset($data->code) || (int) $data->code !== 1) {
+        return '<p>No se pudo crear el pago Pix: '
+            . tunapix_escape(getTunaResponseMessage($data))
+            . '</p>';
+    }
 
-    logModuleCall("Tuna Payment Pix", "tunapix_link", json_encode($global_postfields), $global_paymentUrl, $htmlOutput, $global_postheader);
+    $_SESSION['tunapix_payments'][$cacheKey] = [
+        'createdAt' => time(),
+        'data' => json_decode(json_encode($data), true),
+    ];
 
-    return $htmlOutput;
+    return tunapix_payment_details($data);
 }
-
-function postLink() {
-    global $global_paymentUrl, $global_postHeader, $global_postFields;
-
-    global $global_paymentUrl;
-    global $global_postheader;
-    global $global_postfields;
-    
-    $paymentUrl = $global_paymentUrl;
-    $postHeader = $global_postHeader;
-    $postFields = $global_postFields;
-    $postheader = $global_postheader;
-    $postfields = $global_postfields;
-
-    $ch = curl_init($paymentUrl);
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $paymentUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postHeader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postFields));
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    $init_response = curl_exec($ch);
-    curl_close($ch);
-
-    logModuleCall("Tuna Payment Pix", "postLink", json_encode($postFields), $response, null, $postHeader);
-    $data = json_decode($init_response);
-
-    logModuleCall("Tuna Payment Pix", "postlink", json_encode($postfields), $init_response, $data, $postheader);
-
-}
-
-if(isset($_POST['submit']))
-{
-   postLink();
-} 

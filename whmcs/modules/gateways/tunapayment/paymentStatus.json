@@ -1,0 +1,42 @@
+{
+  "0": {
+    "status": "Started",
+    "description": "The payment transaction has started, but no transactions have been executed yet."
+  },
+  "2": {
+    "status": "Captured",
+    "description": "The payment transaction has been captured, so the funds are secured."
+  },
+  "3": {
+    "status": "Refunded",
+    "description": "The payment transaction has been refunded."
+  },
+  "4": {
+    "status": "Denied",
+    "description": "The payment transaction has been denied by the issuing bank, acquirer, or anti-fraud provider."
+  },
+  "5": {
+    "status": "Cancelled",
+    "description": "The payment transaction has been canceled after being previously authorized."
+  },
+  "6": {
+    "status": "Abandoned",
+    "description": "The payment transaction has been abandoned. It's been started for too long and never evolved to another status."
+  },
+  "7": {
+    "status": "Chargeback",
+    "description": "The payment transaction has been reported as a chargeback."
+  },
+  "8": {
+    "status": "MoneyReceived",
+    "description": "Funds of the payment transaction have been transferred to the partner."
+  },
+  "9": {
+    "status": "PartialRefunded",
+    "description": "The payment transaction has been partially refunded."
+  },
+  "P": {
+    "status": "Pending",
+    "description": "The system is waiting for the result of another process, such as anti-fraud analysis, to complete the payment transaction. Whether the transaction has already been authorized or not depends on how your flows are configured."
+  }
+}

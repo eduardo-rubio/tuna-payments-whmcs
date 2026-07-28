@@ -4,7 +4,6 @@
  */
 
 require_once __DIR__ . '/tunapayment/tunapaymenthelper.php';
-require_once __DIR__ . '/../../includes/modulefunctions.php';
 
 if (!defined("WHMCS")) {
     die("This file cannot be accessed directly");
@@ -72,7 +71,7 @@ function tunapayment_config()
         // "x-tuna-apptoken": "a3823a59-66bb-49e2-95eb-b47c447ec7a7"
         'tunaApptoken' => array(
             'FriendlyName' => 'Tuna App Token',
-            'Type' => 'text',
+            'Type' => 'password',
             'Size' => '36',
             'Default' => '',
             'Description' => 'Enter Tuna App Token here',
@@ -107,20 +106,26 @@ function tunapayment_capture($params)
     $testMode = $params['testMode'];
 
     // Invoice Parameters
-    $invoiceId = $params['invoiceid'];
+    $invoiceId = (string) $params['invoiceid'];
     $description = $params["description"];
-    $amount = $params['amount'];
-    $currencyCode = getCurrency2($params['currency']);
+    $amount = (float) $params['amount'];
+    if ($amount <= 0) {
+        return [
+            'status' => 'error',
+            'rawdata' => ['error' => 'Payment amount must be greater than zero'],
+        ];
+    }
 
     // Credit Card Parameters
     $remoteGatewayToken = $params['gatewayid'];
+    $tokenSingleUse = empty($remoteGatewayToken);
 
     $cardType = $params['cardtype'];
     $cardNumber = $params['cardnum'];
     $cardExpiry = $params['cardexp'];
     $cardStart = $params['cardstart'];
     $cardIssueNumber = $params['cardissuenum'];
-    $cardCvv = $params['cccvv'];
+    $cardCvv = isset($params['cccvv']) ? (string) $params['cccvv'] : '';
 
     $expirationMonth = substr($cardExpiry, 0, 2);
     $expirationYear = "20" . substr($cardExpiry, 2, 2);
@@ -138,7 +143,21 @@ function tunapayment_capture($params)
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
     $userid = $params['clientdetails']['id'];
-    $fullname = getFullName($params['clientdetails']['fullname']);
+    $fullname = getFullName($params['clientdetails']['fullname'], $testMode);
+
+    // Payment/Init expects an ISO-2 countryCode, not a currency code. WHMCS
+    // already supplies the customer's ISO-2 country; the currency lookup is
+    // retained only as a fallback for incomplete customer records.
+    $countryCode = strtoupper((string) $country);
+    if (!preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        $countryCode = getCurrency2($params['currency']);
+    }
+    if (!is_string($countryCode) || !preg_match('/^[A-Z]{2}$/', $countryCode)) {
+        return [
+            'status' => 'error',
+            'rawdata' => ['error' => 'A valid ISO-2 customer country is required'],
+        ];
+    }
 
     // System Parameters
     $companyName = $params['companyname'];
@@ -150,8 +169,18 @@ function tunapayment_capture($params)
     $whmcsVersion = $params['whmcsVersion'];
 
     // Custom Fields
-    $documenttype = $params['customfield']['documenttype'];
-    $documentnumber = $params['customfield']['documentnumber'];
+    $documenttype = isset($params['customfield']['documenttype'])
+        ? $params['customfield']['documenttype']
+        : '';
+    $documentnumber = isset($params['customfield']['documentnumber'])
+        ? $params['customfield']['documentnumber']
+        : '';
+    if ($documenttype === '' || $documentnumber === '') {
+        return [
+            'status' => 'error',
+            'rawdata' => ['error' => 'Customer document type and number are required'],
+        ];
+    }
 
     $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     if ($session_response['success']) {
@@ -167,10 +196,10 @@ function tunapayment_capture($params)
     ;
 
     if (!$remoteGatewayToken) {
-        // If there is no token yet, it indicates this capture is being
-        // attempted using an existing locally stored card. Create a new
-        // token and then attempt capture.
-
+        // Tuna requires tokenization before every credit-card Payment/Init.
+        // This one-off token represents the card entered in WHMCS for this
+        // capture and is not retained by Tuna.
+        // https://dev.tuna.uy/api/payment-integration/#card-tokenization
         $token_response = tunapayment_generate_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardNumber, $expirationMonth, $expirationYear, $cardCvv, true);
         if ($token_response['success']) {
             $remoteGatewayToken = $token_response['token'];
@@ -182,16 +211,32 @@ function tunapayment_capture($params)
                 'rawdata' => $token_response,
             ];
         }
+    } elseif ($cardCvv !== '') {
+        // For a customer-initiated payment with an already stored token, Tuna
+        // requires Token/Bind so the fresh CVV is validated in this session.
+        // WHMCS intentionally omits CVV on automated recurring captures; those
+        // are marked as merchant initiated in Payment/Init below.
+        // https://dev.tuna.uy/api/payment-integration/#using-a-stored-credit-card
+        $bind_response = tunapayment_bind_token(
+            $tunaAccount,
+            $tunaApptoken,
+            $testMode,
+            $sessionId,
+            $remoteGatewayToken,
+            $cardCvv
+        );
+        if (!$bind_response['success']) {
+            return [
+                'status' => 'error',
+                'rawdata' => $bind_response,
+            ];
+        }
     }
     ;
 
-    $paymentUrl = 'https://engine.tunagateway.com/api/Payment/Init';
+    $isMerchantInitiated = !$tokenSingleUse && $cardCvv === '';
 
-    if ($testMode == 'yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Init';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
-    }
+    $apiConfig = tunapayment_api_config('payment', 'Init', $testMode, $tunaAccount, $tunaApptoken);
 
     $customer = array(
         'id' => strval($userid),
@@ -223,12 +268,11 @@ function tunapayment_capture($params)
         'country' => $country,
     );
 
-    // $countryCode = $country;
-    if (is_null($currencyCode)) {
-        $currencyCode=$country;
-    }
-
-
+    // Tuna Payment/Init step 3. Payment method "1" is CreditCard and the
+    // overall status "2" means Captured. Payment status, rather than the more
+    // granular method status, drives the WHMCS result below.
+    // https://dev.tuna.uy/api/payment-integration/#step-3-request-for-the-payment
+    // https://dev.tuna.uy/api/tuna-codes/#payment-status
     $paymentData = array(
         'paymentMethods' => [
             array(
@@ -242,7 +286,7 @@ function tunapayment_capture($params)
                     'expirationMonth' => intval($expirationMonth),
                     'expirationYear' => intval($expirationYear),
                     'brandName' => $cardType,
-                    'tokenSingleUse' => 0,
+                    'tokenSingleUse' => $tokenSingleUse ? 1 : 0,
                     'saveCard' => false,
                     'billingInfo' => array(
                         'document' => $documentnumber,
@@ -253,24 +297,8 @@ function tunapayment_capture($params)
             ),
         ],
         'deliveryAddress' => $deliveryAddress,
-        "countrycode" => $currencyCode,
+        "countryCode" => $countryCode,
         "amount" => $amount,
-    );
-
-    $card = array(
-        'cardHolderName' => $fullname,
-        'cardNumber' => $cardIssueNumber,
-        'expirationMonth' => intval($expirationMonth),
-        'expirationYear' => intval($expirationYear),
-        'cvv' => $cardCvv,
-        'singleUse' => true,
-    );
-
-    $postheader = array(
-        'accept: application/json',
-        'Content-Type: application/json',
-        'x-tuna-account: ' . $tunaAccount,
-        'x-tuna-apptoken: ' . $tunaApptoken,
     );
 
     $postfields = [
@@ -278,21 +306,33 @@ function tunapayment_capture($params)
         'partnerUniqueId' => $invoiceId,
         'customer' => $customer,
         'paymentItems' => $paymentItems,
-        'paymentData' => $paymentData
+        'paymentData' => $paymentData,
+        // Tuna exposes this flag for transactions initiated by the merchant.
+        // It is true only for WHMCS recurring captures where no CVV is supplied.
+        'isMerchantInitiated' => $isMerchantInitiated,
     ];
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $paymentUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $init_response = curl_exec($ch);
-    curl_close($ch);
+    $apiResponse = tunapayment_api_request(
+        $apiConfig['url'],
+        $apiConfig['account'],
+        $apiConfig['appToken'],
+        $postfields,
+        'Tuna Payment',
+        'tunapayment_capture',
+        'POST',
+        tunapayment_idempotency_key('card', 'init', $invoiceId, $amount)
+    );
+    $data = $apiResponse['data'];
 
-    $data = json_decode($init_response);
-
-    logModuleCall("Tuna Payment", "tunapayment_capture", json_encode($postfields), $init_response, $data, $postheader);
+    if (!$apiResponse['success']) {
+        return [
+            'status' => 'error',
+            'rawdata' => [
+                'error' => $apiResponse['error'],
+                'httpCode' => $apiResponse['httpCode'],
+            ],
+        ];
+    }
 
     // perform API call to capture payment and interpret result
     // https://developers.whmcs.com/payment-gateways/tokenised-remote-storage/
@@ -304,34 +344,39 @@ function tunapayment_capture($params)
     //  rawdata	    string or array	The raw data returned by the payment gateway for logging to the gateway log to aid in debugging
     //  gatewayid	string	    The token returned by the payment gateway
 
-    if ($data->code == 1) {
-        // 2	Captured	The payment transaction has been captured, so the funds are secured.
-        if ($data->status == 2) {
+    if (isset($data->code) && (int) $data->code === 1) {
+        $whmcsStatus = getWhmcsPaymentStatus(isset($data->status) ? $data->status : '');
+        if (
+            $whmcsStatus === 'success'
+            && (!isset($data->paymentKey) || (string) $data->paymentKey === '')
+        ) {
+            $whmcsStatus = 'error';
+        }
+        if ($whmcsStatus === 'success') {
             $returnData = [
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
                 // Data to be recorded in the gateway log - can be a string or array
-                'rawdata' => $data,
+                'rawdata' => tunapayment_sanitize_log_data($data),
                 // Unique Transaction ID for the capture transaction
-                'transid' => $data->paymentKey,
+                'transid' => isset($data->paymentKey) ? $data->paymentKey : '',
                 // Return only if the token has updated or changed
                 // 'gatewayid' => $data->token,
             ];
         } else {
             $returnData = [
-                // 'success' if successful, otherwise 'declined', 'error' for failure
-                'status' => getStatusMessage($data->status),
+                'status' => $whmcsStatus,
                 // When not successful, a specific decline reason can be logged in the Transaction History
-                'declinereason' => 'Credit card declined. Please contact issuer.',
+                'declinereason' => getStatusMessage(isset($data->status) ? $data->status : ''),
                 // Data to be recorded in the gateway log - can be a string or array
-                'rawdata' => $data,
+                'rawdata' => tunapayment_sanitize_log_data($data),
             ];
         }
     } else {
         $returnData = [
             'status' => 'error',
-            'rawdata' => $data,
-            'code' => getCodeMessage($data->code)
+            'rawdata' => tunapayment_sanitize_log_data($data),
+            'code' => getTunaResponseMessage($data)
         ];
     }
 
@@ -359,7 +404,7 @@ function tunapayment_storeremote($params)
     $cardexp = $params['cardexp'];
     $cardstart = $params['cardstart'];
     $cardissuenum = $params['cardissuenum'];
-    $cardCvv = $params['cccvv'];
+    $cardCvv = isset($params['cccvv']) ? (string) $params['cccvv'] : '';
 
     $expirationMonth = substr($cardexp, 0, 2);
     $expirationYear = "20" . substr($cardexp, 2, 2);
@@ -377,7 +422,7 @@ function tunapayment_storeremote($params)
     $phone = $params['clientdetails']['phonenumber'];
     $taxid = $params['clientdetails']['taxid'];
     $userid = $params['clientdetails']['id'];
-    $fullname = getFullName($params['clientdetails']['fullname']);
+    $fullname = getFullName($params['clientdetails']['fullname'], $testMode);
 
     $session_response = tunapayment_session($tunaAccount, $tunaApptoken, $testMode, $userid, $email);
     if ($session_response['success']) {
@@ -393,8 +438,9 @@ function tunapayment_storeremote($params)
 
     switch ($action) {
         case 'create':
-            // Make API call to create a token here
-            $token_response = tunapayment_generate_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, true);
+            // singleUse=false is required because WHMCS stores gatewayid and
+            // reuses this Tuna token for future recurring captures.
+            $token_response = tunapayment_generate_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $fullname, $cardnum, $expirationMonth, $expirationYear, $cardCvv, false);
             if ($token_response['success']) {
                 return [
                     'status' => 'success',
@@ -409,26 +455,54 @@ function tunapayment_storeremote($params)
                 ];
             }
         case 'update':
-            // Make API call to update a token here
-            $bind_response = tunapayment_bind_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $gatewayid, $cardCvv);
-            if ($bind_response['success']) {
+            // Token/Bind only validates a stored token with CVV; it does not
+            // update PAN or expiry. Therefore a WHMCS card update creates a new
+            // reusable token and removes the previous one afterwards.
+            $token_response = tunapayment_generate_token(
+                $tunaAccount,
+                $tunaApptoken,
+                $testMode,
+                $sessionId,
+                $fullname,
+                $cardnum,
+                $expirationMonth,
+                $expirationYear,
+                $cardCvv,
+                false
+            );
+            if ($token_response['success']) {
+                if ($gatewayid !== '') {
+                    tunapayment_delete_token(
+                        $tunaAccount,
+                        $tunaApptoken,
+                        $testMode,
+                        $sessionId,
+                        $gatewayid
+                    );
+                }
                 return [
                     'status' => 'success',
-                    'gatewayid' => $bind_response['token'],
+                    'gatewayid' => $token_response['token'],
                 ];
             } else {
                 return [
                     // 'success' if successful, otherwise 'error' for failure
                     'status' => 'error',
                     // Data to be recorded in the gateway log - can be a string or array
-                    'rawdata' => $bind_response,
+                    'rawdata' => $token_response,
                 ];
             }
         case 'delete':
-            // Make API call to delete a token here
             $delete_response = tunapayment_delete_token($tunaAccount, $tunaApptoken, $testMode, $sessionId, $gatewayid);
+            if ($delete_response['success']) {
+                return [
+                    'status' => 'success',
+                ];
+            }
+
             return [
-                'status' => 'success',
+                'status' => 'error',
+                'rawdata' => $delete_response,
             ];
     }
     return [
@@ -455,9 +529,21 @@ function tunapayment_refund($params)
     $testMode = $params['testMode'];
 
     // Transaction Parameters
-    $invoiceId = $params['invoiceid'];
-    $transactionIdToRefund = $params['transid'];
-    $refundAmount = $params['amount'];
+    $invoiceId = (string) $params['invoiceid'];
+    $transactionIdToRefund = isset($params['transid']) ? (string) $params['transid'] : '';
+    $refundAmount = (float) $params['amount'];
+    if ($refundAmount <= 0) {
+        return [
+            'status' => 'error',
+            'rawdata' => ['error' => 'Refund amount must be greater than zero'],
+        ];
+    }
+    if ($transactionIdToRefund === '') {
+        return [
+            'status' => 'error',
+            'rawdata' => ['error' => 'The original Tuna paymentKey is required'],
+        ];
+    }
     $currencyCode = $params['currency'];
 
     // Client Parameters
@@ -480,65 +566,63 @@ function tunapayment_refund($params)
     $moduleName = $params['paymentmethod'];
     $whmcsVersion = $params['whmcsVersion'];
 
-    $cancelUrl = 'https://engine.tunagateway.com/api/Payment/Cancel';
+    // Tuna calls refunds "cancellations". cardsDetail identifies the amount
+    // and method to refund, while paymentKey identifies the original payment.
+    // https://dev.tuna.uy/api/payment/#tag/default/operation/Cancel
+    $apiConfig = tunapayment_api_config('payment', 'Cancel', $testMode, $tunaAccount, $tunaApptoken);
 
-    if ($testMode == 'yes') {
-        $paymentUrl = 'https://sandbox.tuna-demo.uy/api/Payment/Cancel';
-        $tunaAccount = 'demo';
-        $tunaApptoken = 'a3823a59-66bb-49e2-95eb-b47c447ec7a7';
-    }
-
-    $postheader = array(
-        'accept: application/json',
-        'Content-Type: application/json',
-        'x-tuna-account: ' . $tunaAccount,
-        'x-tuna-apptoken: ' . $tunaApptoken,
-    );
-
-    $cardDetail = [
+    // This gateway creates exactly one card method per payment, so methodId 0
+    // is the method being refunded. Split-payment refunds are out of scope.
+    $cardsDetail = [
         array(
             'amount' => $refundAmount,
             'methodId' => 0,
-            'Splits' => [
-                array(
-                    'MerchantID' => '',
-                    'Amount' => $refundAmount,
-                )
-            ],
         )
     ];
 
     $postfields = [
-        'cardDetail' => $cardDetail,
+        'cardsDetail' => $cardsDetail,
         'paymentKey' => $transactionIdToRefund,
-        'partnerUniqueId' => $invoiceId,
-        'paymentDay' => '',
+        'partnerUniqueID' => (string) $invoiceId,
     ];
 
-    $ch = curl_init();
-    curl_setopt($ch, CURLOPT_URL, $cancelUrl);
-    curl_setopt($ch, CURLOPT_POST, true);
-    curl_setopt($ch, CURLOPT_HTTPHEADER, $postheader);
-    curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postfields, JSON_FORCE_OBJECT));
-    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-    $response = curl_exec($ch);
-    curl_close($ch);
+    $apiResponse = tunapayment_api_request(
+        $apiConfig['url'],
+        $apiConfig['account'],
+        $apiConfig['appToken'],
+        $postfields,
+        'Tuna Payment',
+        'tunapayment_refund'
+    );
+    $data = $apiResponse['data'];
 
-    $data = json_decode($response);
-
-    logModuleCall("Tuna Payment", "tunapayment_refund", json_encode($postfields, JSON_FORCE_OBJECT), $response, $data, $postheader);
+    if (!$apiResponse['success']) {
+        return [
+            'status' => 'error',
+            'rawdata' => [
+                'error' => $apiResponse['error'],
+                'httpCode' => $apiResponse['httpCode'],
+            ],
+        ];
+    }
 
     // perform API call to initiate refund and interpret result
 
-    if ($data->code == 1) {
-        if ($data->status == 3) {
+    if (isset($data->code) && (int) $data->code === 1) {
+        // 3 = fully refunded; 9 = partially refunded.
+        if (
+            isset($data->status, $data->operationId)
+            && in_array((string) $data->status, ['3', '9'], true)
+            && (string) $data->operationId !== ''
+        ) {
             return array(
                 // 'success' if successful, otherwise 'declined', 'error' for failure
                 'status' => 'success',
                 // Data to be recorded in the gateway log - can be a string or array
-                'rawdata' => $data,
+                'rawdata' => tunapayment_sanitize_log_data($data),
                 // Unique Transaction ID for the refund transaction
-                'transid' => $transactionIdToRefund,
+                // Cancel returns a new operationId for the refund operation.
+                'transid' => $data->operationId,
             );
 
         }
@@ -546,6 +630,6 @@ function tunapayment_refund($params)
     ;
     return array(
         'status' => 'error',
-        'rawdata' => $data,
+        'rawdata' => tunapayment_sanitize_log_data($data),
     );
 }
